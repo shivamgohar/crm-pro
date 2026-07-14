@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const db = require("./config/db");
 const authRoutes = require("./routes/authRoutes"); // <-- NEW
+const customerRoutes = require("./routes/customerRoutes");
 
 const app = express();
 
@@ -9,6 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use(authRoutes); // <-- NEW
+app.use("/customers", customerRoutes);
 
 app.get("/", async (req, res) => {
   try {
