@@ -8,6 +8,7 @@ function Customers() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
+  const [editingId, setEditingId] = useState(null);
 
   const fetchCustomers = async () => {
     try {
@@ -41,6 +42,72 @@ function Customers() {
       alert("Error Adding Customer");
     }
   };
+
+  const updateCustomer = async () => {
+  try {
+
+    await axios.put(
+      `http://localhost:5000/customers/${editingId}`,
+      {
+        name,
+        phone,
+        email,
+        address,
+      }
+    );
+
+    setEditingId(null);
+
+    setName("");
+    setPhone("");
+    setEmail("");
+    setAddress("");
+
+    fetchCustomers();
+
+    alert("Customer Updated Successfully");
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Error Updating Customer");
+
+  }
+};
+
+const cancelEdit = () => {
+
+  setEditingId(null);
+
+  setName("");
+  setPhone("");
+  setEmail("");
+  setAddress("");
+
+};
+
+const deleteCustomer = async (id) => {
+
+  try {
+
+    await axios.delete(
+      `http://localhost:5000/customers/${id}`
+    );
+
+    fetchCustomers();
+
+    alert("Customer Deleted Successfully");
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Error Deleting Customer");
+
+  }
+
+};
 
   useEffect(() => {
     fetchCustomers();
@@ -99,7 +166,13 @@ function Customers() {
         <br />
         <br />
 
-        <button onClick={addCustomer}>Add Customer</button>
+       <button
+  onClick={
+    editingId ? updateCustomer : addCustomer
+  }
+>
+  {editingId ? "Update Customer" : "Add Customer"}
+</button>
       </div>
 
       {customers.length === 0 ? (
@@ -116,6 +189,46 @@ function Customers() {
             }}
           >
             <h3>{customer.name}</h3>
+            
+   <button
+  onClick={() => {
+
+    setEditingId(customer.id);
+
+    setName(customer.name);
+    setPhone(customer.phone);
+    setEmail(customer.email);
+    setAddress(customer.address);
+
+  }}
+>
+  Edit
+</button>
+
+{
+  editingId && (
+    <button
+      onClick={cancelEdit}
+      style={{ marginLeft: "10px" }}
+    >
+      Cancel
+    </button>
+  )
+}
+
+{" "}
+
+<button
+  onClick={() => {
+
+  if (window.confirm("Delete this customer?")) {
+    deleteCustomer(customer.id);
+  }
+
+}}
+>
+  Delete
+</button>
 
             <p>
               <strong>Phone:</strong> {customer.phone}

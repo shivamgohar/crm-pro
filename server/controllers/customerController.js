@@ -63,7 +63,72 @@ const getCustomers = async (req, res) => {
 
 };
 
+const updateCustomer = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    const { name, phone, email, address } = req.body;
+
+    await db.query(
+      `UPDATE customers
+       SET name=$1,
+           phone=$2,
+           email=$3,
+           address=$4
+       WHERE id=$5`,
+      [name, phone, email, address, id]
+    );
+
+    res.json({
+      success: true,
+      message: "Customer Updated Successfully",
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+
+  }
+};
+
+const deleteCustomer = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    await db.query(
+      "DELETE FROM customers WHERE id = $1",
+      [id]
+    );
+
+    res.json({
+      success: true,
+      message: "Customer Deleted Successfully",
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+
+  }
+
+};
+
 module.exports = {
     addCustomer,
     getCustomers,
+    updateCustomer,
+    deleteCustomer
 };
