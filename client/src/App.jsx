@@ -1,4 +1,5 @@
 import "./App.css";
+import { useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
@@ -6,27 +7,39 @@ import Sidebar from "./components/Sidebar";
 import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  return (
-    <div className="app">
 
-      <Navbar />
+const location = useLocation();
 
-      <div className="main">
+const isLoginPage = location.pathname === "/login";
+  
+ return (
 
-        <Sidebar />
+  <div className="app">
 
-        <div style={{padding:"20px"}}>
+    {
+      !isLoginPage && <Navbar />
+    }
 
-          {/* <Dashboard /> */}
-          <AppRoutes /> 
+    <div className="main">
 
+      {
+        !isLoginPage && <Sidebar />
+      }
 
-        </div>
-
+      <div
+        style={{
+          flex: 1,
+          padding: isLoginPage ? 0 : "20px",
+        }}
+      >
+        <AppRoutes />
       </div>
 
     </div>
-  );
+
+  </div>
+
+);
 }
 
 export default App;

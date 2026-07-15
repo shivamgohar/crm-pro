@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import DashboardCard from "../components/DashboardCard";
+import PeopleIcon from "@mui/icons-material/People";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import PaidIcon from "@mui/icons-material/Paid";
 
-import { Box, Typography, Grid, Card, CardContent } from "@mui/material";
+import { Box, Typography, Grid,  } from "@mui/material";
 
 function Dashboard() {
   const [stats, setStats] = useState({
@@ -38,7 +42,7 @@ function Dashboard() {
     <DashboardCard
       title="Customers"
       value={stats.customers}
-      icon="👥"
+       icon={<PeopleIcon color="primary" sx={{ fontSize: 30 }} />}
     />
   </Grid>
 
@@ -46,7 +50,7 @@ function Dashboard() {
     <DashboardCard
       title="Products"
       value={stats.products}
-      icon="📦"
+      icon={<Inventory2Icon color="warning" sx={{ fontSize: 30 }} />}
     />
   </Grid>
 
@@ -54,7 +58,7 @@ function Dashboard() {
     <DashboardCard
       title="Orders"
       value={stats.orders}
-      icon="🛒"
+      icon={<ShoppingCartIcon color="success" sx={{ fontSize: 30 }} />}
     />
   </Grid>
 
@@ -62,7 +66,7 @@ function Dashboard() {
     <DashboardCard
       title="Revenue"
       value={`₹ ${stats.revenue}`}
-      icon="💰"
+      icon={<PaidIcon color="secondary" sx={{ fontSize: 30 }} />}
     />
   </Grid>
 
