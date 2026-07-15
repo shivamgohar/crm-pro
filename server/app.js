@@ -3,6 +3,9 @@ const cors = require("cors");
 const db = require("./config/db");
 const authRoutes = require("./routes/authRoutes"); // <-- NEW
 const customerRoutes = require("./routes/customerRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const productRoutes = require("./routes/productRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 const app = express();
 
@@ -11,6 +14,9 @@ app.use(express.json());
 
 app.use(authRoutes); // <-- NEW
 app.use("/customers", customerRoutes);
+app.use("/dashboard", dashboardRoutes);
+app.use("/products", productRoutes);
+app.use("/orders", orderRoutes);
 
 app.get("/", async (req, res) => {
   try {

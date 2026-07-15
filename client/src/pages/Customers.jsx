@@ -44,70 +44,53 @@ function Customers() {
   };
 
   const updateCustomer = async () => {
-  try {
-
-    await axios.put(
-      `http://localhost:5000/customers/${editingId}`,
-      {
+    try {
+      await axios.put(`http://localhost:5000/customers/${editingId}`, {
         name,
         phone,
         email,
         address,
-      }
-    );
+      });
 
+      setEditingId(null);
+
+      setName("");
+      setPhone("");
+      setEmail("");
+      setAddress("");
+
+      fetchCustomers();
+
+      alert("Customer Updated Successfully");
+    } catch (error) {
+      console.error(error);
+
+      alert("Error Updating Customer");
+    }
+  };
+
+  const cancelEdit = () => {
     setEditingId(null);
 
     setName("");
     setPhone("");
     setEmail("");
     setAddress("");
+  };
 
-    fetchCustomers();
+  const deleteCustomer = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/customers/${id}`);
 
-    alert("Customer Updated Successfully");
+      fetchCustomers();
 
-  } catch (error) {
+      alert("Customer Deleted Successfully");
+    } catch (error) {
+      console.error(error);
 
-    console.error(error);
-
-    alert("Error Updating Customer");
-
-  }
-};
-
-const cancelEdit = () => {
-
-  setEditingId(null);
-
-  setName("");
-  setPhone("");
-  setEmail("");
-  setAddress("");
-
-};
-
-const deleteCustomer = async (id) => {
-
-  try {
-
-    await axios.delete(
-      `http://localhost:5000/customers/${id}`
-    );
-
-    fetchCustomers();
-
-    alert("Customer Deleted Successfully");
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert("Error Deleting Customer");
-
-  }
-
-};
+      alert("Error Deleting Customer");
+    }
+  };
 
   useEffect(() => {
     fetchCustomers();
@@ -166,13 +149,9 @@ const deleteCustomer = async (id) => {
         <br />
         <br />
 
-       <button
-  onClick={
-    editingId ? updateCustomer : addCustomer
-  }
->
-  {editingId ? "Update Customer" : "Add Customer"}
-</button>
+        <button onClick={editingId ? updateCustomer : addCustomer}>
+          {editingId ? "Update Customer" : "Add Customer"}
+        </button>
       </div>
 
       {customers.length === 0 ? (
@@ -189,55 +168,38 @@ const deleteCustomer = async (id) => {
             }}
           >
             <h3>{customer.name}</h3>
-            
-   <button
-  onClick={() => {
+            <button
+              onClick={() => {
+                setEditingId(customer.id);
 
-    setEditingId(customer.id);
-
-    setName(customer.name);
-    setPhone(customer.phone);
-    setEmail(customer.email);
-    setAddress(customer.address);
-
-  }}
->
-  Edit
-</button>
-
-{
-  editingId && (
-    <button
-      onClick={cancelEdit}
-      style={{ marginLeft: "10px" }}
-    >
-      Cancel
-    </button>
-  )
-}
-
-{" "}
-
-<button
-  onClick={() => {
-
-  if (window.confirm("Delete this customer?")) {
-    deleteCustomer(customer.id);
-  }
-
-}}
->
-  Delete
-</button>
-
+                setName(customer.name);
+                setPhone(customer.phone);
+                setEmail(customer.email);
+                setAddress(customer.address);
+              }}
+            >
+              Edit
+            </button>
+            {editingId && (
+              <button onClick={cancelEdit} style={{ marginLeft: "10px" }}>
+                Cancel
+              </button>
+            )}{" "}
+            <button
+              onClick={() => {
+                if (window.confirm("Delete this customer?")) {
+                  deleteCustomer(customer.id);
+                }
+              }}
+            >
+              Delete
+            </button>
             <p>
               <strong>Phone:</strong> {customer.phone}
             </p>
-
             <p>
               <strong>Email:</strong> {customer.email}
             </p>
-
             <p>
               <strong>Address:</strong> {customer.address}
             </p>
