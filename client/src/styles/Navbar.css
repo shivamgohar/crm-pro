@@ -1,0 +1,32 @@
+.navbar{
+    height:70px;
+    background:#ffffff;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 30px;
+    border-bottom:1px solid #e5e7eb;
+}
+
+.navbar-left h2{
+    color:#1e3a8a;
+    font-size:24px;
+}
+
+.logout-btn{
+
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:10px 18px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:.25s;
+
+}
+
+.logout-btn:hover{
+
+    background:#1d4ed8;
+
+}

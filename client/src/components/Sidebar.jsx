@@ -1,24 +1,57 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import "../styles/Sidebar.css";
 
 function Sidebar() {
   return (
-    <div
-      style={{
-        width: "220px",
-        background: "#eeeeee",
-        padding: "20px",
-        height: "100%",
-      }}
-    >
-      <h3>Menu</h3>
+    <aside className="sidebar">
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        <li><Link to="/">Dashboard</Link></li>
-        <li><Link to="/customers">Customers</Link></li>
-        <li><Link to="/products">Products</Link></li>
-        <li><Link to="/orders">Orders</Link></li>
-      </ul>
-    </div>
+      <div className="logo">
+        <h2>ACN GROUP</h2>
+        <p>CRM Software</p>
+      </div>
+
+      <nav className="menu">
+
+        <NavLink
+          to="/"
+          end
+          className={({ isActive }) =>
+            isActive ? "menu-item active" : "menu-item"
+          }
+        >
+          🏠 Dashboard
+        </NavLink>
+
+        <NavLink
+          to="/customers"
+          className={({ isActive }) =>
+            isActive ? "menu-item active" : "menu-item"
+          }
+        >
+          👥 Customers
+        </NavLink>
+
+        <NavLink
+          to="/products"
+          className={({ isActive }) =>
+            isActive ? "menu-item active" : "menu-item"
+          }
+        >
+          📦 Products
+        </NavLink>
+
+        <NavLink
+          to="/orders"
+          className={({ isActive }) =>
+            isActive ? "menu-item active" : "menu-item"
+          }
+        >
+          🛒 Orders
+        </NavLink>
+
+      </nav>
+
+    </aside>
   );
 }
 
