@@ -7,6 +7,7 @@ import Products from "../pages/Products";
 import Orders from "../pages/Orders";
 import Login from "../pages/Login";
 import Reports from "../pages/Reports";
+import Inventory from "../pages/Inventory";
 
 function AppRoutes() {
   return (
@@ -52,6 +53,15 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/Inventory"
+        element={
+          <ProtectedRoute>
+            <Inventory />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="/login" element={<Login />} />
     </Routes>
   );

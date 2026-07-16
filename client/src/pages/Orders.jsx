@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Autocomplete from "@mui/material/Autocomplete";
+import { useSnackbar } from "notistack";
 
 import {
   Box,
@@ -39,12 +40,15 @@ function Orders() {
   const [total, setTotal] = useState(0);
   const [orders, setOrders] = useState([]);
 
+  const { enqueueSnackbar } = useSnackbar();
+
   const [search, setSearch] = useState("");
 
   const [open, setOpen] = useState(false);
 
-  // const [deleteOpen, setDeleteOpen] = useState(false);
-  // const [deleteId, setDeleteId] = useState(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const [deleteId, setDeleteId] = useState(null);
 
   const fetchCustomers = async () => {
     const response = await axios.get("http://localhost:5000/customers");
@@ -99,18 +103,43 @@ function Orders() {
     }
   };
 
-  const deleteOrder = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5000/orders/${id}`);
+ const deleteOrder = async () => {
 
-      fetchOrders();
+  try {
 
-      fetchProducts();
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    await axios.delete(
+      `http://localhost:5000/orders/${deleteId}`
+    );
 
+    enqueueSnackbar(
+      "Order deleted successfully",
+      {
+        variant: "success",
+      }
+    );
+
+    fetchOrders();
+
+    fetchProducts();
+
+    setDeleteOpen(false);
+
+    setDeleteId(null);
+
+  } catch (error) {
+
+    console.error(error);
+
+    enqueueSnackbar(
+      "Failed to delete order",
+      {
+        variant: "error",
+      }
+    );
+
+  }
+
+};
   useEffect(() => {
     fetchCustomers();
 
@@ -233,9 +262,9 @@ function Orders() {
                       color="error"
                       startIcon={<DeleteIcon />}
                       onClick={() => {
-                        if (window.confirm("Delete this order?")) {
-                          deleteOrder(order.id);
-                        }
+                        setDeleteId(order.id);
+
+                        setDeleteOpen(true);
                       }}
                     >
                       Delete
@@ -368,6 +397,39 @@ function Orders() {
           </Button>
         </DialogActions>
       </Dialog>
+
+<Dialog
+  open={deleteOpen}
+  onClose={() => setDeleteOpen(false)}
+>
+  <DialogTitle>
+    Delete Order
+  </DialogTitle>
+
+  <DialogContent>
+    Are you sure you want to delete this order?
+  </DialogContent>
+
+  <DialogActions>
+
+    <Button
+      onClick={() => setDeleteOpen(false)}
+    >
+      Cancel
+    </Button>
+
+    <Button
+      color="error"
+      variant="contained"
+      onClick={deleteOrder}
+    >
+      Delete
+    </Button>
+
+  </DialogActions>
+
+</Dialog>
+
     </Box>
   );
 }

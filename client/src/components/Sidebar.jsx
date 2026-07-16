@@ -58,6 +58,16 @@ function Sidebar() {
   📊 Reports
 </NavLink>
 
+
+<NavLink
+  to="/inventory"
+  className={({ isActive }) =>
+    isActive ? "menu-item active" : "menu-item"
+  }
+>
+  📦 Inventory
+</NavLink>
+
       </nav>
 
     </aside>
