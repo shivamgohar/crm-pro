@@ -19,6 +19,88 @@ const getDashboard = async (req, res) => {
     const revenueResult = await db.query(
       "SELECT COALESCE(SUM(total),0) FROM orders"
     );
+    const recentOrdersResult = await db.query(
+
+      `
+SELECT
+
+customers.name AS customer_name,
+
+products.name AS product_name,
+
+orders.quantity,
+
+orders.total,
+
+orders.created_at
+
+FROM orders
+
+JOIN customers
+
+ON orders.customer_id = customers.id
+
+JOIN products
+
+ON orders.product_id = products.id
+
+ORDER BY orders.created_at DESC
+
+LIMIT 5
+
+`
+
+    );
+
+    const lowStockResult = await db.query(
+
+      `
+SELECT
+
+id,
+
+name,
+
+stock
+
+FROM products
+
+WHERE stock <= 10
+
+ORDER BY stock ASC
+
+LIMIT 5
+
+`
+
+    );
+
+    const topSellingResult = await db.query(
+
+      `
+SELECT
+
+products.id,
+
+products.name,
+
+SUM(orders.quantity) AS total_sold
+
+FROM orders
+
+JOIN products
+
+ON orders.product_id = products.id
+
+GROUP BY products.id, products.name
+
+ORDER BY total_sold DESC
+
+LIMIT 5
+
+`
+
+    );
 
     res.json({
 
@@ -31,6 +113,9 @@ const getDashboard = async (req, res) => {
       orders: Number(orderResult.rows[0].count),
 
       revenue: Number(revenueResult.rows[0].coalesce),
+      recentOrders: recentOrdersResult.rows,
+      lowStockProducts: lowStockResult.rows,
+      topSellingProducts: topSellingResult.rows,
 
     });
 

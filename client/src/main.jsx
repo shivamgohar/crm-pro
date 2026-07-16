@@ -8,6 +8,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import "./index.css";
 import App from "./App";
 import theme from "./theme/theme";
+import { SnackbarProvider } from "notistack";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -16,11 +17,18 @@ createRoot(document.getElementById("root")).render(
 
       <CssBaseline />
 
-      <BrowserRouter>
-
-        <App />
-
-      </BrowserRouter>
+     <SnackbarProvider
+  maxSnack={3}
+  autoHideDuration={3000}
+  anchorOrigin={{
+    vertical: "top",
+    horizontal: "right",
+  }}
+>
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+</SnackbarProvider>
 
     </ThemeProvider>
 

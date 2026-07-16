@@ -49,6 +49,15 @@ function Sidebar() {
           🛒 Orders
         </NavLink>
 
+        <NavLink
+  to="/reports"
+  className={({ isActive }) =>
+    isActive ? "menu-item active" : "menu-item"
+  }
+>
+  📊 Reports
+</NavLink>
+
       </nav>
 
     </aside>
