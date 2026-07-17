@@ -8,7 +8,8 @@ const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const inventoryRoutes = require("./routes/inventoryRoutes");
-
+const invoiceRoutes = require("./routes/invoiceRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 const app = express();
 
 app.use(cors());
@@ -21,6 +22,8 @@ app.use("/products", productRoutes);
 app.use("/orders", orderRoutes);
 app.use("/reports", reportRoutes);
 app.use("/inventory", inventoryRoutes);
+app.use("/invoice", invoiceRoutes);
+app.use("/payments", paymentRoutes);
 
 app.get("/", async (req, res) => {
   try {

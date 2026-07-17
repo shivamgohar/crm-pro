@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import api from "../api/api";
 import CustomSnackbar from "../components/CustomSnackbar";
 import { useSnackbar } from "notistack";
 import LoadingSpinner from "../components/LoadingSpinner";
+import SearchBar from "../components/SearchBar";
+import useDebounce from "../hooks/useDebounce";
+import Pagination from "@mui/material/Pagination";
 
 import {
   Box,
@@ -21,10 +25,11 @@ import {
 } from "@mui/material";
 
 import TextField from "@mui/material/TextField";
-import InputAdornment from "@mui/material/InputAdornment";
+// import InputAdornment from "@mui/material/InputAdornment";
 
-import SearchIcon from "@mui/icons-material/Search";
+// import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -40,7 +45,17 @@ function Customers() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [loading, setLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [page, setPage] = useState(1);
+
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalPages: 1,
+    totalRecords: 0,
+  });
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -51,11 +66,19 @@ function Customers() {
       // loading Testing
       // await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const response = await axios.get("http://localhost:5000/customers");
-
+      // const response = await axios.get(
+      //   `http://localhost:5000/customers?search=${search}`,
+      // );
+      const response = await api.get(
+        `/customers?search=${debouncedSearch}&page=${page}&limit=10`,
+      );
       setCustomers(response.data.customers);
+      setPagination(response.data.pagination);
     } catch (error) {
       console.error(error);
+      enqueueSnackbar("Failed to load customers", {
+        variant: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -158,6 +181,42 @@ function Customers() {
     }
   };
 
+  const importCustomers = async (event) => {
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    try {
+      setImportLoading(true);
+
+      const response = await api.post("/customers/import", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      enqueueSnackbar(response.data.message, {
+        variant: "success",
+      });
+
+      fetchCustomers();
+    } catch (error) {
+      console.error(error);
+
+      enqueueSnackbar("Excel Import Failed", {
+        variant: "error",
+      });
+    } finally {
+      setImportLoading(false);
+
+      event.target.value = "";
+    }
+  };
+
   const validateCustomer = () => {
     if (name.trim().length < 3) {
       setSnackbarMessage("Name must contain at least 3 characters");
@@ -194,20 +253,20 @@ function Customers() {
     return true;
   };
 
-  const filteredCustomers = customers.filter((customer) => {
-    const keyword = search.toLowerCase();
+  // const filteredCustomers = customers.filter((customer) => {
+  //   const keyword = search.toLowerCase();
 
-    return (
-      customer.name.toLowerCase().includes(keyword) ||
-      customer.phone.toLowerCase().includes(keyword) ||
-      customer.email.toLowerCase().includes(keyword) ||
-      customer.address.toLowerCase().includes(keyword)
-    );
-  });
+  //   return (
+  //     customer.name.toLowerCase().includes(keyword) ||
+  //     customer.phone.toLowerCase().includes(keyword) ||
+  //     customer.email.toLowerCase().includes(keyword) ||
+  //     customer.address.toLowerCase().includes(keyword)
+  //   );
+  // });
 
   useEffect(() => {
     fetchCustomers();
-  }, []);
+  }, [debouncedSearch, page]);
 
   return (
     <>
@@ -225,36 +284,48 @@ function Customers() {
             Customers
           </Typography>
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setOpen(true)}
-          >
-            Add Customer
-          </Button>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              component="label"
+              variant="outlined"
+              startIcon={<UploadFileIcon />}
+              disabled={importLoading}
+            >
+              {importLoading ? "Importing..." : "Import Excel"}
+
+              <input
+                hidden
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={importCustomers}
+              />
+            </Button>
+
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setOpen(true)}
+            >
+              Add Customer
+            </Button>
+          </Box>
         </Box>
 
-        <TextField
-          fullWidth
-          placeholder="Search Customer..."
+        <SearchBar
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ mb: 3 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
           }}
+          placeholder="Search by ID, Name, Phone or Email..."
         />
 
-        {filteredCustomers.length === 0 ? (
+        {customers.length === 0 ? (
           <Typography align="center" sx={{ mt: 4 }}>
             No Customers Found
           </Typography>
         ) : (
-          filteredCustomers.map((customer) => (
+          customers.map((customer) => (
             <div
               key={customer.id}
               style={{
@@ -264,6 +335,7 @@ function Customers() {
                 borderRadius: "8px",
               }}
             >
+             
               <h3>{customer.name}</h3>
 
               <Button
@@ -307,7 +379,20 @@ function Customers() {
             </div>
           ))
         )}
-
+ <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  mt: 3,
+                }}
+              >
+                <Pagination
+                  page={page}
+                  count={pagination.totalPages}
+                  color="primary"
+                  onChange={(event, value) => setPage(value)}
+                />
+              </Box>
         <Dialog
           open={open}
           onClose={() => setOpen(false)}

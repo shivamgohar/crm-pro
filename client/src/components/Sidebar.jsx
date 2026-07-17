@@ -68,6 +68,27 @@ function Sidebar() {
   📦 Inventory
 </NavLink>
 
+<NavLink
+  to="/invoice"
+  className={({ isActive }) =>
+    isActive ? "menu-item active" : "menu-item"
+  }
+>
+  🧾 Invoice
+</NavLink>
+
+<NavLink
+  to="/payments"
+  className={({ isActive }) =>
+    isActive ? "menu-item active" : "menu-item"
+  }
+>
+   💳 Payments
+</NavLink>
+
+
+  
+
       </nav>
 
     </aside>

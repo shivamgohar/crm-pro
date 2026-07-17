@@ -8,6 +8,9 @@ import Orders from "../pages/Orders";
 import Login from "../pages/Login";
 import Reports from "../pages/Reports";
 import Inventory from "../pages/Inventory";
+import Invoice from "../pages/Invoice";
+import Payments from "../pages/Payments";
+
 
 function AppRoutes() {
   return (
@@ -61,6 +64,26 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/Invoice"
+        element={
+          <ProtectedRoute>
+            <Invoice />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/Payments"
+        element={
+          <ProtectedRoute>
+            <Payments />
+          </ProtectedRoute>
+        }
+      />
+
+      
 
       <Route path="/login" element={<Login />} />
     </Routes>
