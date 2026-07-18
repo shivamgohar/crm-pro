@@ -10,6 +10,7 @@ import Reports from "../pages/Reports";
 import Inventory from "../pages/Inventory";
 import Invoice from "../pages/Invoice";
 import Payments from "../pages/Payments";
+import CustomerProfile from "../pages/CustomerProfile";
 
 
 function AppRoutes() {
@@ -79,6 +80,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Payments />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/customers/:id"
+        element={
+          <ProtectedRoute>
+            <CustomerProfile />
           </ProtectedRoute>
         }
       />

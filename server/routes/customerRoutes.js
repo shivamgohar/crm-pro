@@ -5,9 +5,10 @@ const router = express.Router();
 const {
     addCustomer,
     getCustomers,
+    getCustomerById,
     updateCustomer,
     deleteCustomer,
-    importCustomers
+    importCustomers,
 } = require("../controllers/customerController");
 
 const upload = require("../middleware/upload");
@@ -22,6 +23,7 @@ router.post(
 
 
 router.get("/", getCustomers);
+router.get("/:id", getCustomerById);
 router.put("/:id", updateCustomer);
 router.delete("/:id", deleteCustomer);
 

@@ -33,9 +33,7 @@ export default function Payments() {
     payment_status: "PAID",
   });
 
-  useEffect(() => {
-    fetchPayments();
-  }, []);
+
 
   const fetchPayments = async () => {
     try {
@@ -68,6 +66,10 @@ export default function Payments() {
       console.error(error);
     }
   };
+
+    useEffect(() => {
+    fetchPayments();
+  }, []);
 
   return (
     <div>

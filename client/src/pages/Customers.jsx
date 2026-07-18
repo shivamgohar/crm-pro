@@ -7,6 +7,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import SearchBar from "../components/SearchBar";
 import useDebounce from "../hooks/useDebounce";
 import Pagination from "@mui/material/Pagination";
+import { useNavigate } from "react-router-dom";
 
 import {
   Box,
@@ -49,6 +50,7 @@ function Customers() {
   const [loading, setLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const navigate = useNavigate();
 
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -328,19 +330,22 @@ function Customers() {
           customers.map((customer) => (
             <div
               key={customer.id}
+              onClick={() => navigate(`/customers/${customer.customer_code }`)}
               style={{
                 border: "1px solid #ccc",
                 padding: "15px",
                 marginBottom: "10px",
                 borderRadius: "8px",
+                cursor: "pointer",  
               }}
             >
-             
               <h3>{customer.name}</h3>
 
               <Button
-                onClick={() => {
-                  setEditingId(customer.id);
+                onClick={(event) => {
+                  event.stopPropagation();
+
+                  setEditingId(customer.customer_code );
 
                   setName(customer.name);
 
@@ -359,7 +364,9 @@ function Customers() {
               <Button
                 color="error"
                 variant="outlined"
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
+
                   setDeleteId(customer.id);
 
                   setDeleteOpen(true);
@@ -379,20 +386,20 @@ function Customers() {
             </div>
           ))
         )}
- <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  mt: 3,
-                }}
-              >
-                <Pagination
-                  page={page}
-                  count={pagination.totalPages}
-                  color="primary"
-                  onChange={(event, value) => setPage(value)}
-                />
-              </Box>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            mt: 3,
+          }}
+        >
+          <Pagination
+            page={page}
+            count={pagination.totalPages}
+            color="primary"
+            onChange={(event, value) => setPage(value)}
+          />
+        </Box>
         <Dialog
           open={open}
           onClose={() => setOpen(false)}
