@@ -1,4 +1,5 @@
 import { useState } from "react";
+import api from "../../api/api";
 
 import {
   Dialog,
@@ -32,7 +33,7 @@ import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 // import PaymentsIcon from "@mui/icons-material/Payments";
 import NotesIcon from "@mui/icons-material/Notes";
 
-function AddServiceDialog({ open, handleClose, customer }) {
+function AddServiceDialog({ open, handleClose, customer, onServiceAdded, }) {
   const [serviceDate, setServiceDate] = useState(dayjs());
 
   const serviceTypes = ["Installation", "Repair", "AMC", "Filter Change"];
@@ -60,10 +61,25 @@ function AddServiceDialog({ open, handleClose, customer }) {
   const pendingAmount =
     (Number(formData.totalAmount) || 0) -
     (Number(formData.receivedAmount) || 0);
+const handleSaveService = async () => {
+  try {
+    await api.post("/services", {
+      customer_id: customer.id,
+      service_date: serviceDate.format("YYYY-MM-DD"),
+      service_type: formData.serviceType,
+      engineer: formData.engineer,
+      remark: formData.remark,
+      amount: formData.totalAmount,
+    });
 
-  const handleSaveService = () => {
-    console.log(formData);
-  };
+    onServiceAdded();
+
+    handleClose();
+
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   return (
     <Dialog

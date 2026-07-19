@@ -19,7 +19,7 @@ function Navbar() {
 
       <div className="navbar-left">
 
-        <h2>ACN GROUP CRM</h2>
+        <h2>ACN GROUP @ water Experts </h2>
 
       </div>
 

@@ -10,6 +10,7 @@ const reportRoutes = require("./routes/reportRoutes");
 const inventoryRoutes = require("./routes/inventoryRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const serviceRoutes = require("./routes/serviceRoutes");
 const app = express();
 
 app.use(cors());
@@ -24,6 +25,7 @@ app.use("/reports", reportRoutes);
 app.use("/inventory", inventoryRoutes);
 app.use("/invoice", invoiceRoutes);
 app.use("/payments", paymentRoutes);
+app.use("/services", serviceRoutes);
 
 app.get("/", async (req, res) => {
   try {

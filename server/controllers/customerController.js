@@ -109,7 +109,7 @@ WHERE
 
     const result = await db.query(
       `
-SELECT *
+SELECT DISTINCT ON (customer_code) *
 
 FROM customers
 
@@ -117,7 +117,7 @@ WHERE
 
     $1 = ''
 
-    OR CAST(id AS TEXT) ILIKE '%' || $1 || '%'
+    OR customer_code ILIKE '%' || $1 || '%'
 
     OR name ILIKE '%' || $1 || '%'
 
@@ -125,10 +125,12 @@ WHERE
 
     OR email ILIKE '%' || $1 || '%'
 
-ORDER BY id DESC
+ORDER BY customer_code, id DESC
 
 LIMIT $2
 OFFSET $3
+
+
 `,
       [
         search,
@@ -165,15 +167,17 @@ const getCustomerById = async (req, res) => {
 
   try {
 
-    const { id } = req.params;
+   const { customerCode } = req.params;
 
     const result = await db.query(
       `
       SELECT *
       FROM customers
       WHERE customer_code  = $1
+      ORDER BY id DESC
+      LIMIT 1;
       `,
-      [id]
+      [customerCode]
     );
 
     if (result.rows.length === 0) {
@@ -265,7 +269,7 @@ const deleteCustomer = async (req, res) => {
 };
 
 const importCustomers = async (req, res) => {
-console.log("NEW IMPORT FUNCTION RUNNING");
+  console.log("NEW IMPORT FUNCTION RUNNING");
   try {
 
     if (!req.file) {
@@ -296,6 +300,25 @@ console.log("NEW IMPORT FUNCTION RUNNING");
         serviceDate = `${excelDate.y}-${String(excelDate.m).padStart(2, "0")}-${String(excelDate.d).padStart(2, "0")}`;
 
       }
+
+
+      const existing = await db.query(
+  `
+  SELECT id
+  FROM customers
+  WHERE customer_code = $1
+    AND service_date = $2
+    AND service = $3
+  LIMIT 1
+  `,
+  [
+    String(row["Customer ID"] || ""),
+    serviceDate,
+    row["Services"] || ""
+  ]
+);
+
+if (existing.rows.length === 0) {
 
       await db.query(
 
@@ -330,13 +353,13 @@ console.log("NEW IMPORT FUNCTION RUNNING");
 
       );
 
-    } 
+    } }
 
     res.json({
-    success: true,
-    message: `${data.length} customers imported successfully.`,
-    totalRows: data.length
-});
+      success: true,
+      message: `${data.length} customers imported successfully.`,
+      totalRows: data.length
+    });
 
   } catch (error) {
 

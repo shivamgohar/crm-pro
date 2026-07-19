@@ -5,34 +5,36 @@ import CustomerSummaryCard from "../components/customer/CustomerSummaryCard";
 import CustomerStatusCard from "../components/customer/CustomerStatusCard";
 import QuickActionBar from "../components/customer/QuickActionBar";
 import AddServiceDialog from "../components/customer/AddServiceDialog";
+import ServiceHistory from "../components/customer/ServiceHistory";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 // import VisibilityIcon from "@mui/icons-material/Visibility";
 // import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import AddIcon from "@mui/icons-material/Add";
+// import AddIcon from "@mui/icons-material/Add";
+
 
 import {
   Box,
-  // Card,
-  // CardContent,
+  Card,
+  CardContent,
   Typography,
   Button,
-  // Divider,
+  Divider,
   Grid,
-  // Chip,
+  Chip,
   Stack,
   Paper,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  // Table,
+  // TableBody,
+  // TableCell,
+  // TableContainer,
+  // TableHead,
+  // TableRow,
   // IconButton,
 } from "@mui/material";
 
@@ -41,11 +43,13 @@ function CustomerProfile() {
   const navigate = useNavigate();
 
   const [customer, setCustomer] = useState(null);
+
+  const [services, setServices] = useState([]);
   const [openServiceDialog, setOpenServiceDialog] = useState(false);
 
   const fetchCustomer = async () => {
     try {
-      const response = await api.get(`/customers/${id}`);
+      const response = await api.get(`/customers/code/${id}`);
 
       setCustomer(response.data.customer);
     } catch (error) {
@@ -53,16 +57,32 @@ function CustomerProfile() {
     }
   };
 
-  const handleOpenServiceDialog = () => {
-  setOpenServiceDialog(true);
-};
+  const fetchServices = async () => {
 
-const handleCloseServiceDialog = () => {
-  setOpenServiceDialog(false);
-};
+    
+    try {
+      // const response = await api.get(`/services/customer/${id}`);
+      const response = await api.get(`/services/customer-code/${id}`);
+
+      setServices(response.data);
+      console.log("API Response:", response.data);
+      console.log("Fetched:", response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleOpenServiceDialog = () => {
+    setOpenServiceDialog(true);
+  };
+
+  const handleCloseServiceDialog = () => {
+    setOpenServiceDialog(false);
+  };
 
   useEffect(() => {
     fetchCustomer();
+    fetchServices();
   }, [id]);
 
   if (!customer) {
@@ -83,35 +103,22 @@ const handleCloseServiceDialog = () => {
         >
           Back
         </Button>
-
-       
       </Stack>
 
-   <QuickActionBar
-onAddService={handleOpenServiceDialog}
-/>
+      <QuickActionBar onAddService={handleOpenServiceDialog} />
 
-<Grid container spacing={3}>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={8}>
+          <CustomerSummaryCard customer={customer} />
+        </Grid>
 
-<Grid item xs={12} md={8}>
-
-<CustomerSummaryCard
-customer={customer}
-/>
-
-</Grid>
-
-<Grid item xs={12} md={4}>
-
-<CustomerStatusCard />
-
-</Grid>
-
-</Grid>
-      
+        <Grid item xs={12} md={4}>
+          <CustomerStatusCard />
+        </Grid>
+      </Grid>
 
       <Box sx={{ mt: 4 }}>
-        <Accordion defaultExpanded>
+        {/* <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6">Service History</Typography>
           </AccordionSummary>
@@ -193,8 +200,9 @@ customer={customer}
               </Table>
             </TableContainer>
           </AccordionDetails>
-        </Accordion>
+        </Accordion> */}
 
+        <ServiceHistory services={services} />
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6">Payment History</Typography>
@@ -243,11 +251,13 @@ customer={customer}
           </AccordionDetails>
         </Accordion>
       </Box>
+
       <AddServiceDialog
-open={openServiceDialog}
-handleClose={handleCloseServiceDialog}
-customer={customer}
-/>
+        open={openServiceDialog}
+        handleClose={handleCloseServiceDialog}
+        customer={customer}
+        onServiceAdded={fetchServices}
+      />
     </Box>
   );
 }

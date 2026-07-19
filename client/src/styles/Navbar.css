@@ -1,6 +1,6 @@
 .navbar{
     height:70px;
-    background:#ffffff;
+    background: #65769f;
     display:flex;
     justify-content:space-between;
     align-items:center;
@@ -9,13 +9,13 @@
 }
 
 .navbar-left h2{
-    color:#1e3a8a;
-    font-size:24px;
+    color:#0f0f10;
+    font-size:16px;
 }
 
 .logout-btn{
 
-    background:#2563eb;
+    background:#000000;
     color:white;
     border:none;
     padding:10px 18px;
