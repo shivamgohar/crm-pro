@@ -17,25 +17,13 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Button,
-  Divider,
   Grid,
-  Chip,
   Stack,
-  Paper,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  // Table,
-  // TableBody,
-  // TableCell,
-  // TableContainer,
-  // TableHead,
-  // TableRow,
-  // IconButton,
 } from "@mui/material";
 
 function CustomerProfile() {

@@ -33,8 +33,67 @@ import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 // import PaymentsIcon from "@mui/icons-material/Payments";
 import NotesIcon from "@mui/icons-material/Notes";
 
+import { useEffect } from "react";
+
+import { useSnackbar } from "notistack";
+
+
 function AddServiceDialog({ open, handleClose, customer, onServiceAdded, }) {
   const [serviceDate, setServiceDate] = useState(dayjs());
+  const [products, setProducts] = useState([]);
+  const { enqueueSnackbar } = useSnackbar();
+  
+
+  const [selectedProducts, setSelectedProducts] = useState([
+  {
+    productId: "",
+    quantity: 1,
+  },
+]);
+
+const addProductRow = () => {
+  setSelectedProducts((prev) => [
+    ...prev,
+    {
+      productId: "",
+      quantity: 1,
+    },
+  ]);
+};
+
+const removeProductRow = (index) => {
+  setSelectedProducts((prev) =>
+    prev.filter((_, i) => i !== index)
+  );
+};
+
+const handleProductChange = (index, field, value) => {
+  const updatedProducts = [...selectedProducts];
+
+  updatedProducts[index][field] = value;
+
+  setSelectedProducts(updatedProducts);
+};
+
+
+ const fetchProducts = async () => {
+  try {
+    const res = await api.get("/products");
+
+    setProducts(res.data.products);
+
+  } catch (error) {
+    console.error(error);
+
+    enqueueSnackbar(
+        error.response?.data?.message || "Failed to load products",
+        {
+            variant: "error",
+        }
+    );
+}
+};
+
 
   const serviceTypes = ["Installation", "Repair", "AMC", "Filter Change"];
   const serviceStatus = ["Completed", "Pending", "In Progress"];
@@ -62,15 +121,26 @@ function AddServiceDialog({ open, handleClose, customer, onServiceAdded, }) {
     (Number(formData.totalAmount) || 0) -
     (Number(formData.receivedAmount) || 0);
 const handleSaveService = async () => {
+
+
   try {
-    await api.post("/services", {
-      customer_id: customer.id,
-      service_date: serviceDate.format("YYYY-MM-DD"),
-      service_type: formData.serviceType,
-      engineer: formData.engineer,
-      remark: formData.remark,
-      amount: formData.totalAmount,
-    });
+    const response = await api.post("/services", {
+  customer_code: customer.customer_code,
+  service_date: serviceDate.format("YYYY-MM-DD"),
+  service: formData.serviceType,
+  engineer: formData.engineer,
+  remark: formData.remark,
+  amount: formData.totalAmount,
+  received_amount: formData.receivedAmount,
+  pending_amount: pendingAmount,
+  status: formData.serviceStatus,
+  products: selectedProducts,
+});
+
+
+enqueueSnackbar(response.data.message, {
+  variant: "success",
+});
 
     onServiceAdded();
 
@@ -78,8 +148,21 @@ const handleSaveService = async () => {
 
   } catch (error) {
     console.error(error);
-  }
+
+    enqueueSnackbar(
+        error.response?.data?.message || "Something went wrong",
+        {
+            variant: "error",
+        }
+    );
+}
 };
+
+useEffect(() => {
+  if (open) {
+    fetchProducts();
+  }
+}, [open]);
 
   return (
     <Dialog
@@ -284,6 +367,94 @@ const handleSaveService = async () => {
                 ),
               }}
             />
+
+
+
+<Divider />
+
+<Typography variant="h6" fontWeight={700}>
+  Products Used
+</Typography>
+
+<Stack spacing={2}>
+  {selectedProducts.map((item, index) => (
+    <Stack
+      key={index}
+      direction="row"
+      spacing={2}
+      alignItems="center"
+    >
+      <TextField
+        select
+        fullWidth
+        label="Product"
+        value={item.productId}
+        onChange={(e) =>
+          handleProductChange(
+            index,
+            "productId",
+            e.target.value
+          )
+        }
+      >
+        <MenuItem value="">
+          Select Product
+        </MenuItem>
+
+        {products
+  .filter((product) => {
+    return (
+      !selectedProducts.some(
+        (p, i) =>
+          i !== index &&
+          Number(p.productId) === Number(product.id)
+      )
+    );
+  })
+  .map((product) => (
+    <MenuItem
+      key={product.id}
+      value={product.id}
+    >
+      {product.name} (Stock : {product.stock})
+    </MenuItem>
+))}
+      </TextField>
+
+      <TextField
+        label="Qty"
+        type="number"
+        sx={{ width: 120 }}
+        value={item.quantity}
+        onChange={(e) =>
+          handleProductChange(
+            index,
+            "quantity",
+            e.target.value
+          )
+        }
+      />
+
+      <Button
+        color="error"
+        onClick={() =>
+          removeProductRow(index)
+        }
+      >
+        Remove
+      </Button>
+    </Stack>
+  ))}
+
+  <Button
+    variant="outlined"
+    onClick={addProductRow}
+  >
+    + Add Product
+  </Button>
+</Stack>
+
+            
 
             <TextField
               fullWidth
