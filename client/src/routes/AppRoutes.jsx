@@ -11,6 +11,8 @@ import Inventory from "../pages/Inventory";
 import Invoice from "../pages/Invoice";
 import Payments from "../pages/Payments";
 import CustomerProfile from "../pages/CustomerProfile";
+import CustomerFields from "../pages/settings/CustomerFields";
+import Settings from "../pages/settings/Settings";
 
 
 function AppRoutes() {
@@ -93,7 +95,19 @@ function AppRoutes() {
         }
       />
 
-      
+      <Route
+    path="/settings/customer-fields"
+    element={ <ProtectedRoute>
+           <CustomerFields />
+          </ProtectedRoute>}
+
+/>
+
+<Route
+    path="/settings"
+    element={ <ProtectedRoute><Settings /> </ProtectedRoute>}
+/>
+
 
       <Route path="/login" element={<Login />} />
     </Routes>

@@ -87,6 +87,15 @@ function Sidebar() {
 </NavLink>
 
 
+
+<NavLink
+  to="/settings"
+  className={({ isActive }) =>
+    isActive ? "menu-item active" : "menu-item"
+  }
+>
+  ⚙ Settings
+</NavLink>
   
 
       </nav>

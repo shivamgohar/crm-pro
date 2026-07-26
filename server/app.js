@@ -11,6 +11,7 @@ const inventoryRoutes = require("./routes/inventoryRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
+const companyFieldRoutes = require("./routes/companyFieldRoutes");
 const app = express();
 
 app.use(cors());
@@ -26,6 +27,7 @@ app.use("/inventory", inventoryRoutes);
 app.use("/invoice", invoiceRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/services", serviceRoutes);
+app.use("/api/company/customer-fields", companyFieldRoutes);
 
 app.get("/", async (req, res) => {
   try {
