@@ -38,6 +38,13 @@ function Settings() {
       path: "/settings/customer-fields",
       disabled: false,
     },
+       {
+      title: "Customer Status",
+      description: "Manage customer Status",
+      icon: <People fontSize="large" />,
+      path: "/settings/customer-Status",
+      disabled: false,
+    },
     {
       title: "Excel Mapping",
       description: "Configure Excel import",

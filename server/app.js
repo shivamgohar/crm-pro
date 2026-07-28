@@ -12,13 +12,26 @@ const invoiceRoutes = require("./routes/invoiceRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const companyFieldRoutes = require("./routes/companyFieldRoutes");
+const companyStatusRoutes = require("./routes/companyStatusRoutes");
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+// app.use((req, res, next) => {
+//     const start = Date.now();
+
+//     res.on("finish", () => {
+//         console.log(
+//             `${req.method} ${req.originalUrl} -> ${res.statusCode} (${Date.now() - start}ms)`
+//         );
+//     });
+
+//     next();
+// });
+
 app.use(authRoutes); // <-- NEW
-app.use("/customers", customerRoutes);
+app.use("/api/customers", customerRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/products", productRoutes);
 app.use("/orders", orderRoutes);
@@ -26,8 +39,9 @@ app.use("/reports", reportRoutes);
 app.use("/inventory", inventoryRoutes);
 app.use("/invoice", invoiceRoutes);
 app.use("/payments", paymentRoutes);
-app.use("/services", serviceRoutes);
+app.use("/api/services", serviceRoutes);
 app.use("/api/company/customer-fields", companyFieldRoutes);
+app.use("/api/company/customer-status", companyStatusRoutes);
 
 app.get("/", async (req, res) => {
   try {

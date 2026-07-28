@@ -13,7 +13,7 @@ import Payments from "../pages/Payments";
 import CustomerProfile from "../pages/CustomerProfile";
 import CustomerFields from "../pages/settings/CustomerFields";
 import Settings from "../pages/settings/Settings";
-
+import CustomerStatus from "../pages/settings/CustomerStatus";
 
 function AppRoutes() {
   return (
@@ -96,18 +96,26 @@ function AppRoutes() {
       />
 
       <Route
-    path="/settings/customer-fields"
-    element={ <ProtectedRoute>
-           <CustomerFields />
-          </ProtectedRoute>}
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />{" "}
+          </ProtectedRoute>
+        }
+      />
 
-/>
+      <Route
+        path="/settings/customer-fields"
+        element={
+          <ProtectedRoute>
+            <CustomerFields />
+          </ProtectedRoute>
+        }
+      />
 
-<Route
-    path="/settings"
-    element={ <ProtectedRoute><Settings /> </ProtectedRoute>}
-/>
-
+      <Route path="/settings/customer-status" element={ <ProtectedRoute>
+            <CustomerStatus />
+          </ProtectedRoute>} />
 
       <Route path="/login" element={<Login />} />
     </Routes>

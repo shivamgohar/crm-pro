@@ -8,6 +8,8 @@ import RestoreIcon from "@mui/icons-material/Restore";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import { useNavigate } from "react-router-dom";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import {
   Box,  
@@ -46,6 +48,7 @@ function CustomerFields() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedField, setSelectedField] = useState(null);
 const [dialogMode, setDialogMode] = useState("add");
+const navigate = useNavigate();
 
 
 const handleEdit = (field) => {
@@ -122,7 +125,17 @@ const handleDragEnd = async (result) => {
         alignItems="center"
         mb={3}
       >
+
+
+
         <Typography variant="h4">Customer Fields</Typography>
+           <Button
+          startIcon={<ArrowBackIcon />}
+          variant="outlined"
+          onClick={() => navigate("/settings")}
+        >
+          Back
+        </Button>
 
        <Button
     variant="contained"
@@ -131,6 +144,8 @@ const handleDragEnd = async (result) => {
     + Add Field
 </Button>
       </Box>
+
+   
 
       <DragDropContext onDragEnd={handleDragEnd}>
 
