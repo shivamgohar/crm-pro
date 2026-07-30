@@ -5,19 +5,165 @@ const addCustomer = async (req, res) => {
 
   try {
 
-    const {
-      name,
-      phone,
-      email,
-      address,
-    } = req.body;
+    // const {
+    //   name,
+    //   phone,
+    //   email,
+    //   address,
+    // } = req.body;
+
+    const { fields } = req.body;
+
+    // await db.query(
+    //   `INSERT INTO customers
+    //         (name, phone, email, address)
+    //         VALUES ($1, $2, $3, $4)`,
+    //   [name, phone, email, address]
+    // );
+
+
+    // Check duplicate customer code
+const customerCodeExists = await db.query(
+    `
+    SELECT id
+    FROM customers
+    WHERE customer_code = $1
+    `,
+    [fields.customer_code]
+);
+
+if (customerCodeExists.rows.length > 0) {
+    return res.status(400).json({
+        success: false,
+        message: "Customer code already exists."
+    });
+}
+
+// Check duplicate phone
+const phoneExists = await db.query(
+    `
+    SELECT id
+    FROM customers
+    WHERE phone = $1
+    `,
+    [fields.phone]
+);
+
+if (phoneExists.rows.length > 0) {
+    return res.status(400).json({
+        success: false,
+        message: "Phone number already exists."
+    });
+}
+
+await db.query("BEGIN");
+
+const customerResult = await db.query(
+  `
+  INSERT INTO customers
+  (customer_code, name, phone)
+  VALUES ($1, $2, $3)
+  RETURNING id
+  `,
+  [
+    fields.customer_code,
+    fields.customer_name,
+    fields.phone,
+  ]
+);
+
+const customerId = customerResult.rows[0].id;
+
+// 1. Pehle database se fields lao
+const fieldsResult = await db.query(`
+    SELECT id, field_key
+    FROM company_customer_fields
+`);
+
+// 2. Phir fieldMap banao
+const fieldMap = {};
+
+fieldsResult.rows.forEach((field) => {
+    fieldMap[field.field_key] = field.id;
+});
+
+// 3. Ab fieldMap use karo
+for (const [fieldKey, fieldValue] of Object.entries(fields)) {
+
+    if (
+        fieldKey === "customer_code" ||
+        fieldKey === "customer_name" ||
+        fieldKey === "phone"
+    ) {
+        continue;
+    }
+
+    if (!fieldMap[fieldKey]) {
+        continue;
+    }
 
     await db.query(
-      `INSERT INTO customers
-            (name, phone, email, address)
-            VALUES ($1, $2, $3, $4)`,
-      [name, phone, email, address]
+        `
+        INSERT INTO customer_field_values
+        (customer_id, field_id, field_value)
+        VALUES ($1, $2, $3)
+        `,
+        [
+            customerId,
+            fieldMap[fieldKey],
+            fieldValue,
+        ]
     );
+}
+
+
+console.log(fieldMap);
+await db.query("COMMIT");
+
+// const customerId = customerResult.rows[0].id;
+
+// for (const [fieldKey, fieldValue] of Object.entries(fields)) {
+
+//     if (
+//         fieldKey === "customer_code" ||
+//         fieldKey === "customer_name" ||
+//         fieldKey === "phone"
+//     ) {
+//         continue;
+//     }
+
+//     if (!fieldMap[fieldKey]) {
+//         continue;
+//     }
+
+//     await db.query(
+//         `
+//         INSERT INTO customer_field_values
+//         (customer_id, field_id, field_value)
+//         VALUES ($1, $2, $3)
+//         `,
+//         [
+//             customerId,
+//             fieldMap[fieldKey],
+//             fieldValue,
+//         ]
+//     );
+// }
+
+// const fieldsResult = await db.query(`
+//     SELECT id, field_key
+//     FROM company_customer_fields
+// `);
+
+// const fieldMap = {};
+
+// fieldsResult.rows.forEach((field) => {
+//     fieldMap[field.field_key] = field.id;
+// });
+
+// console.log(fieldMap);
+
+// await db.query("COMMIT");
 
     res.json({
       success: true,
@@ -25,6 +171,8 @@ const addCustomer = async (req, res) => {
     });
 
   } catch (error) {
+
+      await db.query("ROLLBACK");
 
     console.error(error);
 

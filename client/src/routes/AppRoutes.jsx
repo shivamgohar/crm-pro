@@ -14,6 +14,10 @@ import CustomerProfile from "../pages/CustomerProfile";
 import CustomerFields from "../pages/settings/CustomerFields";
 import Settings from "../pages/settings/Settings";
 import CustomerStatus from "../pages/settings/CustomerStatus";
+import ImportWizard from "../modules/import/pages/ImportWizard";
+
+// import ImportWizard from "../modules/shared/import/pages/ImportWizard";
+
 
 function AppRoutes() {
   return (
@@ -112,6 +116,17 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+
+
+<Route
+  path="/customers/import"
+  element={
+    <ProtectedRoute>
+      <ImportWizard />
+    </ProtectedRoute>
+  }
+/>
 
       <Route path="/settings/customer-status" element={ <ProtectedRoute>
             <CustomerStatus />

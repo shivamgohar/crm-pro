@@ -8,6 +8,7 @@ import SearchBar from "../components/SearchBar";
 import useDebounce from "../hooks/useDebounce";
 import Pagination from "@mui/material/Pagination";
 import { useNavigate } from "react-router-dom";
+import CustomerDialog from "../components/customer/CustomerDialog";
 
 import {
   Box,
@@ -378,6 +379,9 @@ function Customers() {
                 <strong>Phone:</strong> {customer.phone}
               </p>
               <p>
+                <strong>customer_code:</strong> {customer.customer_code}
+              </p>
+              <p>
                 <strong>Email:</strong> {customer.email}
               </p>
               <p>
@@ -400,7 +404,7 @@ function Customers() {
             onChange={(event, value) => setPage(value)}
           />
         </Box>
-        <Dialog
+        {/* <Dialog
           open={open}
           onClose={() => setOpen(false)}
           fullWidth
@@ -482,7 +486,13 @@ function Customers() {
               Delete
             </Button>
           </DialogActions>
-        </Dialog>
+        </Dialog> */}
+
+<CustomerDialog
+  open={open}
+  onClose={() => setOpen(false)}
+   onSuccess={fetchCustomers}
+/>
 
         <CustomSnackbar
           open={snackbarOpen}

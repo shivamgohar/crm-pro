@@ -10,9 +10,12 @@ const {
       reorderCustomerFields,
       getAllCustomerFields,
       restoreCustomerField,
+      getImportCustomerFields,
 } = require("../controllers/companyFieldController");
 
 router.get("/all", getAllCustomerFields);
+
+router.get("/import", getImportCustomerFields);
 
 router.get("/", getCustomerFields);
 

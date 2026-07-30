@@ -323,6 +323,37 @@ const restoreCustomerField = async (req, res) => {
 
 };
 
+const getImportCustomerFields = async (req, res) => {
+  try {
+
+    const result = await pool.query(`
+     SELECT
+        id,
+        field_key,
+        field_label,
+        field_type,
+        is_required,
+        is_visible,
+        display_order,
+        is_system
+    FROM company_customer_fields
+    WHERE is_visible = true
+    ORDER BY display_order ASC
+    `);
+
+    res.json(result.rows);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to fetch import fields"
+    });
+
+  }
+};
+
 module.exports = {
     getCustomerFields,
     addCustomerField,
@@ -331,4 +362,5 @@ module.exports = {
      reorderCustomerFields,
      getAllCustomerFields,
      restoreCustomerField,
+     getImportCustomerFields,
 };
