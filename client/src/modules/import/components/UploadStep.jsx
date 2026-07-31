@@ -1,9 +1,27 @@
-import { Button, Paper, Stack, Typography } from "@mui/material";
+
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+
+
+import {
+  Button,
+  Paper,
+  Stack,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
+
+
+
 
 export default function UploadStep({
   selectedFile,
   onFileSelect,
+    sheetNames,
+  selectedSheet,
+  onSheetChange,
 }) {
   const handleChange = (event) => {
     const file = event.target.files[0];
@@ -50,24 +68,40 @@ export default function UploadStep({
 
         </Button>
 
-        {selectedFile && (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2,
-              width: 350,
-            }}
-          >
-            <Typography>
-              <strong>File:</strong> {selectedFile.name}
-            </Typography>
+    {selectedFile && (
+  <Paper
+    variant="outlined"
+    sx={{
+      p: 2,
+      width: 350,
+    }}
+  >
+    <Typography>
+      <strong>File:</strong> {selectedFile.name}
+    </Typography>
 
-            <Typography>
-              <strong>Size:</strong>{" "}
-              {(selectedFile.size / 1024).toFixed(2)} KB
-            </Typography>
-          </Paper>
-        )}
+    <Typography>
+      <strong>Size:</strong>{" "}
+      {(selectedFile.size / 1024).toFixed(2)} KB
+    </Typography>
+
+    <FormControl fullWidth sx={{ mt: 3 }}>
+      <InputLabel>Select Sheet</InputLabel>
+
+      <Select
+        value={selectedSheet}
+        label="Select Sheet"
+        onChange={(e) => onSheetChange(e.target.value)}
+      >
+        {sheetNames.map((sheet) => (
+          <MenuItem key={sheet} value={sheet}>
+            {sheet}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  </Paper>
+)}
 
       </Stack>
     </Paper>

@@ -11,24 +11,78 @@ import {
   MenuItem
 } from "@mui/material";
 
-const MappingStep = ({ rows, crmFields, mapping, setMapping }) => {
+import { useSnackbar } from "notistack";
+
+const MappingStep = ({ rows, crmFields, mapping, setMapping, selectedFile,
+  selectedSheet,
+  totalRows, }) => {
+    const { enqueueSnackbar } = useSnackbar();
 
   if (!rows.length) return null;
 
   const excelColumns = Object.keys(rows[0]);
 
-  const handleChange = (excelColumn, crmField) => {
-    setMapping((prev) => ({
+const handleChange = (excelColumn, crmField) => {
+
+  // User cleared the selection
+  if (crmField === "") {
+    setMapping((prev) => {
+      const updated = {
+        ...prev,
+        [excelColumn]: "",
+      };
+
+      console.log("Updated Mapping:", updated);
+
+      return updated;
+    });
+
+    return;
+  }
+
+  // Check duplicate mapping
+  const alreadyMapped = Object.entries(mapping).find(
+    ([column, field]) =>
+      column !== excelColumn && field === crmField
+  );
+
+  if (alreadyMapped) {
+    enqueueSnackbar("This CRM field is already mapped.", {
+      variant: "warning",
+    });
+    return;
+  }
+
+  setMapping((prev) => {
+    const updated = {
       ...prev,
       [excelColumn]: crmField,
-    }));
-  };
+    };
+
+    console.log("Updated Mapping:", updated);
+
+    return updated;
+  });
+};
+
 
   return (
     <Paper sx={{ p: 2, mt: 3 }}>
       <Typography variant="h6" gutterBottom>
         Column Mapping
       </Typography>
+
+      <Typography variant="body2">
+  File: {selectedFile?.name}
+</Typography>
+
+<Typography variant="body2">
+  Sheet: {selectedSheet}
+</Typography>
+
+<Typography variant="body2">
+  Rows: {totalRows}
+</Typography>
 
       <Table>
         <TableHead>

@@ -6,6 +6,10 @@ export const transformRows = (rows, mapping) => {
 
         Object.entries(mapping).forEach(([excelColumn, crmField]) => {
 
+
+             // Skip unmapped columns
+      if (!crmField) return;
+
             transformed[crmField] = row[excelColumn];
 
         });
@@ -14,4 +18,4 @@ export const transformRows = (rows, mapping) => {
 
     });
 
-};
+};  

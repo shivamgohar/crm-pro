@@ -5,6 +5,8 @@ import { getImportFields } from "../services/importService";
 import MappingStep from "../components/MappingStep";
 import { autoMapColumns } from "../utils/autoMapper";
 import { transformRows } from "../utils/transformRows";
+import { useSnackbar } from "notistack";
+import { cleanColumns } from "../utils/cleanColumns";
 
 import { readExcelFile, getSheetData } from "../services/excelService";
 
@@ -25,9 +27,30 @@ export default function ImportWizard() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [workbook, setWorkbook] = useState(null);
   const [sheetNames, setSheetNames] = useState([]);
+  const [selectedSheet, setSelectedSheet] = useState("");
   const [rows, setRows] = useState([]);
   const [crmFields, setCrmFields] = useState([]);
   const [mapping, setMapping] = useState({});
+  const [previewRows, setPreviewRows] = useState([]);
+  const { enqueueSnackbar } = useSnackbar();
+
+const loadSheetData = async (workbook, sheetName) => {
+  const data = getSheetData(workbook, sheetName);
+
+  const cleanedData = cleanColumns(data);
+
+  setRows(cleanedData);
+
+  const fields = await getImportFields();
+
+  setCrmFields(fields);
+
+  const excelColumns = Object.keys(cleanedData[0] || {});
+
+  const autoMapping = autoMapColumns(excelColumns, fields);
+
+  setMapping(autoMapping);
+};
 
   const handleFileSelect = async (file) => {
     setSelectedFile(file);
@@ -40,50 +63,73 @@ export default function ImportWizard() {
 
     const firstSheet = excelWorkbook.SheetNames[0];
 
-    const data = getSheetData(excelWorkbook, firstSheet);
+    setSelectedSheet(firstSheet);
 
-    setRows(data);
-
-    console.log("Workbook :", excelWorkbook);
-
-    console.log("Sheets :", excelWorkbook.SheetNames);
-
-    console.log("Rows :", data);
-
-    console.log("Total Rows :", data.length);
-
-    const fields = await getImportFields();
-
-    setCrmFields(fields);
-
-    console.log("CRM Fields :", fields);
-
-    const excelColumns = Object.keys(data[0] || {});
-
-    const autoMapping = autoMapColumns(excelColumns, fields);
-
-    setMapping(autoMapping);
-
-    console.log(autoMapping);
-
-    const transformedData = transformRows(rows, mapping);
-
-    console.log(transformedData);
+    await loadSheetData(excelWorkbook, firstSheet);
   };
 
-  const handleNext = () => {
-    if (activeStep === 0 && !selectedFile) {
-      alert("Please select an Excel file.");
+
+const handleNext = () => {
+  if (activeStep === 0 && !selectedFile) {
+    enqueueSnackbar("Please select an Excel file.", {
+      variant: "warning",
+    });
+    return;
+  }
+
+  if (activeStep === 1) {
+    // At least one mapping
+    const mappedFields = Object.values(mapping).filter(
+      (value) => value !== ""
+    );
+
+    if (mappedFields.length === 0) {
+      enqueueSnackbar("Please map at least one column.", {
+        variant: "warning",
+      });
       return;
     }
 
-    if (activeStep === 1 && Object.keys(mapping).length === 0) {
-      alert("Please map at least one column.");
+    // Required fields validation
+    const requiredFields = crmFields.filter(
+      (field) => field.is_required
+    );
+
+    const missingFields = requiredFields.filter((field) => {
+      return !Object.values(mapping).includes(field.field_key);
+    });
+
+    if (missingFields.length > 0) {
+      enqueueSnackbar(
+        `Please map required field(s): ${missingFields
+          .map((f) => f.field_label)
+          .join(", ")}`,
+        {
+          variant: "warning",
+        }
+      );
+
       return;
     }
+  }
 
-    setActiveStep((prev) => prev + 1);
-  };
+  if (activeStep === 1) {
+  const transformed = transformRows(rows, mapping);
+
+  setPreviewRows(transformed);
+
+  console.log("Preview Data:", transformed);
+}
+
+  setActiveStep((prev) => prev + 1);
+};
+
+
+const handleSheetChange = async (sheetName) => {
+  setSelectedSheet(sheetName);
+
+  await loadSheetData(workbook, sheetName);
+};
 
   const handleBack = () => {
     if (activeStep > 0) {
@@ -110,6 +156,9 @@ export default function ImportWizard() {
           <UploadStep
             selectedFile={selectedFile}
             onFileSelect={handleFileSelect}
+            sheetNames={sheetNames}
+            selectedSheet={selectedSheet}
+            onSheetChange={handleSheetChange}
           />
         )}
 
@@ -119,10 +168,19 @@ export default function ImportWizard() {
             crmFields={crmFields}
             mapping={mapping}
             setMapping={setMapping}
+            selectedFile={selectedFile}
+            selectedSheet={selectedSheet}
+             totalRows={rows.length}
           />
         )}
 
-        {activeStep === 2 && <PreviewStep rows={rows} />}
+        {activeStep === 2 && (
+  <PreviewStep
+    rows={previewRows}
+    selectedFile={selectedFile}
+    selectedSheet={selectedSheet}
+  />
+)}
 
         {activeStep === 3 && <Typography>Ready to Import</Typography>}
 

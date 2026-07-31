@@ -8,7 +8,11 @@ import {
   Typography,
 } from "@mui/material";
 
-export default function PreviewStep({ rows }) {
+export default function PreviewStep({
+  rows,
+  selectedFile,
+  selectedSheet,
+}) {
 
   if (!rows.length) {
     return (
@@ -23,9 +27,17 @@ export default function PreviewStep({ rows }) {
   return (
     <Paper sx={{ mt: 4, overflow: "auto" }}>
 
-      <Typography sx={{ p: 2 }}>
-        Total Rows : {rows.length}
-      </Typography>
+    <Typography sx={{ px: 2, pt: 2 }}>
+  <strong>File:</strong> {selectedFile?.name}
+</Typography>
+
+<Typography sx={{ px: 2 }}>
+  <strong>Sheet:</strong> {selectedSheet}
+</Typography>
+
+<Typography sx={{ px: 2 }}>
+  <strong>Total Rows:</strong> {rows.length}
+</Typography>
 
       <Table size="small">
 
