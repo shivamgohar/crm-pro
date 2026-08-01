@@ -1,12 +1,14 @@
 import { useState } from "react";
 import UploadStep from "../components/UploadStep";
 import PreviewStep from "../components/PreviewStep";
-import { getImportFields } from "../services/importService";
+import { getImportFields,importCustomers } from "../services/importService";
 import MappingStep from "../components/MappingStep";
 import { autoMapColumns } from "../utils/autoMapper";
 import { transformRows } from "../utils/transformRows";
 import { useSnackbar } from "notistack";
 import { cleanColumns } from "../utils/cleanColumns";
+import ImportStep from "../components/ImportStep";
+import { useNavigate } from "react-router-dom";
 
 import { readExcelFile, getSheetData } from "../services/excelService";
 
@@ -33,6 +35,9 @@ export default function ImportWizard() {
   const [mapping, setMapping] = useState({});
   const [previewRows, setPreviewRows] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
+  const [importResult, setImportResult] = useState(null);
+const [importing, setImporting] = useState(false);
+const navigate = useNavigate();
 
 const loadSheetData = async (workbook, sheetName) => {
   const data = getSheetData(workbook, sheetName);
@@ -69,7 +74,7 @@ const loadSheetData = async (workbook, sheetName) => {
   };
 
 
-const handleNext = () => {
+const handleNext = async  () => {
   if (activeStep === 0 && !selectedFile) {
     enqueueSnackbar("Please select an Excel file.", {
       variant: "warning",
@@ -121,6 +126,16 @@ const handleNext = () => {
   console.log("Preview Data:", transformed);
 }
 
+
+if (activeStep === 3) {
+
+  const result = await importCustomers(previewRows);
+
+  console.log(result);
+
+  return;
+}
+
   setActiveStep((prev) => prev + 1);
 };
 
@@ -136,6 +151,43 @@ const handleSheetChange = async (sheetName) => {
       setActiveStep((prev) => prev - 1);
     }
   };
+
+  const handleImport = async () => {
+
+  try {
+
+    setImporting(true);
+
+    const result = await importCustomers(previewRows);
+
+    console.log(result);
+
+    setImportResult(result);
+
+    enqueueSnackbar("Import Completed", {
+      variant: "success",
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    enqueueSnackbar("Import Failed", {
+      variant: "error",
+    });
+
+  } finally {
+
+    setImporting(false);
+
+  }
+
+};
+
+
+const handleFinish = () => {
+  navigate("/customers");
+};
 
   return (
     <Paper sx={{ p: 3 }}>
@@ -182,7 +234,20 @@ const handleSheetChange = async (sheetName) => {
   />
 )}
 
-        {activeStep === 3 && <Typography>Ready to Import</Typography>}
+      {activeStep === 3 && (
+  <ImportStep
+    selectedFile={selectedFile}
+    selectedSheet={selectedSheet}
+    totalRows={rows.length}
+    totalMappedFields={
+      Object.values(mapping).filter(value => value !== "").length
+    }
+   importing={importing}
+onImport={handleImport}
+  importResult={importResult}
+    onFinish={handleFinish}
+  />
+)}
 
         <Box mt={4} display="flex" justifyContent="space-between">
           <Button disabled={activeStep === 0} onClick={handleBack}>
@@ -192,7 +257,8 @@ const handleSheetChange = async (sheetName) => {
           <Button
             variant="contained"
             onClick={handleNext}
-            disabled={activeStep === 3}
+            // disabled={activeStep === 3}
+            disabled={false}
           >
             Next
           </Button>

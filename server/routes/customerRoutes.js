@@ -8,6 +8,7 @@ const {
     getCustomerById,
     updateCustomer,
     deleteCustomer,
+    importCustomersLegacy,
     importCustomers,
 } = require("../controllers/customerController");
 
@@ -17,7 +18,7 @@ router.post("/", addCustomer);
 
 router.post(
     "/import",
-    upload.single("file"),
+    // upload.single("file"),
     importCustomers
 );
 

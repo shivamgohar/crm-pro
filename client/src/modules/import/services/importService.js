@@ -1,16 +1,3 @@
-// // import axios from "../../../services/api";  
-// import api from "../../../api/api";
-
-// export const getImportFields = async () => {
-
-//     const response = await api.get(
-//         "/company/customer-fields/import"
-//     );
-
-//     return response.data;
-
-// };
-
 
 import api from "../../../api/api";
 
@@ -26,3 +13,19 @@ export const getImportFields = async () => {
     throw error;
   }
 };
+
+
+export const importCustomers = async (rows) => {
+
+  const response = await api.post(
+    "/customers/import",
+    {
+      rows,
+    }
+  );
+
+  return response.data;
+
+};
+
+

@@ -1,6 +1,10 @@
 const db = require("../config/db");
 const XLSX = require("xlsx");
 
+const {
+    importCustomersService,
+} = require("../services/importService");
+
 const addCustomer = async (req, res) => {
 
   try {
@@ -23,147 +27,147 @@ const addCustomer = async (req, res) => {
 
 
     // Check duplicate customer code
-const customerCodeExists = await db.query(
-    `
+    const customerCodeExists = await db.query(
+      `
     SELECT id
     FROM customers
     WHERE customer_code = $1
     `,
-    [fields.customer_code]
-);
+      [fields.customer_code]
+    );
 
-if (customerCodeExists.rows.length > 0) {
-    return res.status(400).json({
+    if (customerCodeExists.rows.length > 0) {
+      return res.status(400).json({
         success: false,
         message: "Customer code already exists."
-    });
-}
+      });
+    }
 
-// Check duplicate phone
-const phoneExists = await db.query(
-    `
+    // Check duplicate phone
+    const phoneExists = await db.query(
+      `
     SELECT id
     FROM customers
     WHERE phone = $1
     `,
-    [fields.phone]
-);
+      [fields.phone]
+    );
 
-if (phoneExists.rows.length > 0) {
-    return res.status(400).json({
+    if (phoneExists.rows.length > 0) {
+      return res.status(400).json({
         success: false,
         message: "Phone number already exists."
-    });
-}
+      });
+    }
 
-await db.query("BEGIN");
+    await db.query("BEGIN");
 
-const customerResult = await db.query(
-  `
+    const customerResult = await db.query(
+      `
   INSERT INTO customers
   (customer_code, name, phone)
   VALUES ($1, $2, $3)
   RETURNING id
   `,
-  [
-    fields.customer_code,
-    fields.customer_name,
-    fields.phone,
-  ]
-);
+      [
+        fields.customer_code,
+        fields.customer_name,
+        fields.phone,
+      ]
+    );
 
-const customerId = customerResult.rows[0].id;
+    const customerId = customerResult.rows[0].id;
 
-// 1. Pehle database se fields lao
-const fieldsResult = await db.query(`
+    // 1. Pehle database se fields lao
+    const fieldsResult = await db.query(`
     SELECT id, field_key
     FROM company_customer_fields
 `);
 
-// 2. Phir fieldMap banao
-const fieldMap = {};
+    // 2. Phir fieldMap banao
+    const fieldMap = {};
 
-fieldsResult.rows.forEach((field) => {
-    fieldMap[field.field_key] = field.id;
-});
+    fieldsResult.rows.forEach((field) => {
+      fieldMap[field.field_key] = field.id;
+    });
 
-// 3. Ab fieldMap use karo
-for (const [fieldKey, fieldValue] of Object.entries(fields)) {
+    // 3. Ab fieldMap use karo
+    for (const [fieldKey, fieldValue] of Object.entries(fields)) {
 
-    if (
+      if (
         fieldKey === "customer_code" ||
         fieldKey === "customer_name" ||
         fieldKey === "phone"
-    ) {
+      ) {
         continue;
-    }
+      }
 
-    if (!fieldMap[fieldKey]) {
+      if (!fieldMap[fieldKey]) {
         continue;
-    }
+      }
 
-    await db.query(
+      await db.query(
         `
         INSERT INTO customer_field_values
         (customer_id, field_id, field_value)
         VALUES ($1, $2, $3)
         `,
         [
-            customerId,
-            fieldMap[fieldKey],
-            fieldValue,
+          customerId,
+          fieldMap[fieldKey],
+          fieldValue,
         ]
-    );
-}
+      );
+    }
 
 
-console.log(fieldMap);
-await db.query("COMMIT");
+    console.log(fieldMap);
+    await db.query("COMMIT");
 
-// const customerId = customerResult.rows[0].id;
+    // const customerId = customerResult.rows[0].id;
 
-// for (const [fieldKey, fieldValue] of Object.entries(fields)) {
+    // for (const [fieldKey, fieldValue] of Object.entries(fields)) {
 
-//     if (
-//         fieldKey === "customer_code" ||
-//         fieldKey === "customer_name" ||
-//         fieldKey === "phone"
-//     ) {
-//         continue;
-//     }
+    //     if (
+    //         fieldKey === "customer_code" ||
+    //         fieldKey === "customer_name" ||
+    //         fieldKey === "phone"
+    //     ) {
+    //         continue;
+    //     }
 
-//     if (!fieldMap[fieldKey]) {
-//         continue;
-//     }
+    //     if (!fieldMap[fieldKey]) {
+    //         continue;
+    //     }
 
-//     await db.query(
-//         `
-//         INSERT INTO customer_field_values
-//         (customer_id, field_id, field_value)
-//         VALUES ($1, $2, $3)
-//         `,
-//         [
-//             customerId,
-//             fieldMap[fieldKey],
-//             fieldValue,
-//         ]
-//     );
-// }
+    //     await db.query(
+    //         `
+    //         INSERT INTO customer_field_values
+    //         (customer_id, field_id, field_value)
+    //         VALUES ($1, $2, $3)
+    //         `,
+    //         [
+    //             customerId,
+    //             fieldMap[fieldKey],
+    //             fieldValue,
+    //         ]
+    //     );
+    // }
 
-// const fieldsResult = await db.query(`
-//     SELECT id, field_key
-//     FROM company_customer_fields
-// `);
+    // const fieldsResult = await db.query(`
+    //     SELECT id, field_key
+    //     FROM company_customer_fields
+    // `);
 
-// const fieldMap = {};
+    // const fieldMap = {};
 
-// fieldsResult.rows.forEach((field) => {
-//     fieldMap[field.field_key] = field.id;
-// });
+    // fieldsResult.rows.forEach((field) => {
+    //     fieldMap[field.field_key] = field.id;
+    // });
 
-// console.log(fieldMap);
+    // console.log(fieldMap);
 
-// await db.query("COMMIT");
+    // await db.query("COMMIT");
 
     res.json({
       success: true,
@@ -172,7 +176,7 @@ await db.query("COMMIT");
 
   } catch (error) {
 
-      await db.query("ROLLBACK");
+    await db.query("ROLLBACK");
 
     console.error(error);
 
@@ -315,7 +319,7 @@ const getCustomerById = async (req, res) => {
 
   try {
 
-   const { customerCode } = req.params;
+    const { customerCode } = req.params;
 
     const result = await db.query(
       `
@@ -416,7 +420,11 @@ const deleteCustomer = async (req, res) => {
 
 };
 
-const importCustomers = async (req, res) => {
+
+// Legacy Excel importer (old ACN format)
+// Keep only for reference until new importer is complete.
+
+const importCustomersLegacy = async (req, res) => {
   console.log("NEW IMPORT FUNCTION RUNNING");
   try {
 
@@ -451,7 +459,7 @@ const importCustomers = async (req, res) => {
 
 
       const existing = await db.query(
-  `
+        `
   SELECT id
   FROM customers
   WHERE customer_code = $1
@@ -459,18 +467,18 @@ const importCustomers = async (req, res) => {
     AND service = $3
   LIMIT 1
   `,
-  [
-    String(row["Customer ID"] || ""),
-    serviceDate,
-    row["Services"] || ""
-  ]
-);
+        [
+          String(row["Customer ID"] || ""),
+          serviceDate,
+          row["Services"] || ""
+        ]
+      );
 
-if (existing.rows.length === 0) {
+      if (existing.rows.length === 0) {
 
-      await db.query(
+        await db.query(
 
-        `INSERT INTO customers
+          `INSERT INTO customers
         (
             customer_code,
             name,
@@ -487,21 +495,22 @@ if (existing.rows.length === 0) {
             $1,$2,$3,$4,$5,$6,$7,$8,$9
         )`,
 
-        [
-          String(row["Customer ID"] || ""),
-          row["Customer Name"] || "",
-          String(row["Contact"] || ""),
-          row["Address"] || "",
-          serviceDate,
-          row["Services"] || "",
-          row["Engineer"] || "",
-          row["Remark"] || "",
-          row["Amount"] || 0
-        ]
+          [
+            String(row["Customer ID"] || ""),
+            row["Customer Name"] || "",
+            String(row["Contact"] || ""),
+            row["Address"] || "",
+            serviceDate,
+            row["Services"] || "",
+            row["Engineer"] || "",
+            row["Remark"] || "",
+            row["Amount"] || 0
+          ]
 
-      );
+        );
 
-    } }
+      }
+    }
 
     res.json({
       success: true,
@@ -525,11 +534,141 @@ if (existing.rows.length === 0) {
 
 };
 
+// const importCustomers = async (req, res) => {
+//   try {
+
+//     console.log("NEW JSON IMPORT");
+
+//     const rows = req.body.rows;
+
+//     const result = await importCustomersService(rows);
+
+// return res.json(result);
+
+//     let importedCount = 0;
+//     let skippedCount = 0;
+//     let failedCount = 0;
+
+//     console.log("Total Rows :", rows.length);
+
+//     for (const row of rows) {
+
+//       try {
+
+//         console.log(row.customer_code, row.customer_name);
+
+//         const existingCustomer = await db.query(
+//           `
+//           SELECT id
+//           FROM customers
+//           WHERE customer_code = $1
+//           LIMIT 1
+//           `,
+//           [
+//             String(row.customer_code || "")
+//           ]
+//         );
+
+//         if (existingCustomer.rows.length === 0) {
+
+//           await db.query(
+//             `
+//             INSERT INTO customers
+//             (
+//               name,
+//               phone,
+//               address,
+//               customer_code
+//             )
+//             VALUES
+//             (
+//               $1,
+//               $2,
+//               $3,
+//               $4
+//             )
+//             `,
+//             [
+//               row.customer_name,
+//               String(row.phone || ""),
+//               row.location || "",
+//               String(row.customer_code || ""),
+//             ]
+//           );
+
+//           importedCount++;
+
+//         } else {
+
+//           skippedCount++;
+
+//         }
+
+//       } catch (error) {
+
+//         failedCount++;
+
+//         console.error(
+//           `Failed Row: ${row.customer_code}`,
+//           error.message
+//         );
+
+//       }
+
+//     }
+
+//     return res.json({
+//       success: true,
+//       total: rows.length,
+//       imported: importedCount,
+//       skipped: skippedCount,
+//       failed: failedCount,
+//     });
+
+//   } catch (error) {
+
+//     console.error(error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Import Failed",
+//     });
+
+//   }
+// };
+
+
+const importCustomers = async (req, res) => {
+
+    try {
+
+        console.log("NEW JSON IMPORT");
+
+        const rows = req.body.rows;
+
+        const result = await importCustomersService(rows);
+
+        return res.json(result);
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Import Failed",
+        });
+
+    }
+
+};
+
 module.exports = {
   addCustomer,
-  getCustomers,
+  getCustomers,   
   getCustomerById,
   updateCustomer,
   deleteCustomer,
+  importCustomersLegacy,
   importCustomers,
 };
