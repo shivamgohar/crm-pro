@@ -7,3 +7,11 @@ export const createCustomer = async (formData) => {
 
   return response.data;
 };
+
+export const updateCustomer = async (id, formData) => {
+  const response = await api.put(`/customers/${id}`, {
+    fields: formData,
+  });
+
+  return response.data;
+};

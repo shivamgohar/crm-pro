@@ -24,6 +24,7 @@ router.post(
 
 
 router.get("/", getCustomers);
+router.get("/:id", getCustomerById);
 router.get("/code/:customerCode", getCustomerById);
 router.put("/:id", updateCustomer);
 router.delete("/:id", deleteCustomer);

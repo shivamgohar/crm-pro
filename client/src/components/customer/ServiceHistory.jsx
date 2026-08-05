@@ -26,7 +26,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import { useState  } from "react";
 
-const ServiceHistory = ({ services }) => {
+const ServiceHistory = ({ services,onEditService }) => {
   const [search, setSearch] = useState("");
   const [recordType, setRecordType] = useState("ALL");
   const [engineerFilter, setEngineerFilter] = useState("ALL");
@@ -150,15 +150,7 @@ sortedServices.sort((a, b) => {
 
 });
 
-// useEffect(() => {
 
-//   const timer = setTimeout(() => {
-//     setSearch(searchText);
-//   }, 2000);
-
-//   return () => clearTimeout(timer);
-
-// }, [searchText]);
 
   return (
     <Box>
@@ -172,13 +164,6 @@ sortedServices.sort((a, b) => {
         <Typography variant="h6" fontWeight={600}>
           Service Records
         </Typography>
-
-        {/* <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-        >
-          Add Service
-        </Button> */}
       </Box>
 
       <Divider />
@@ -361,7 +346,12 @@ sortedServices.sort((a, b) => {
                 <TableCell>{service.remark}</TableCell>
 
                 <TableCell>
-                  <Button variant="contained">Edit</Button>
+                 <Button
+  variant="contained"
+  onClick={() => onEditService(service)}
+>
+  Edit
+</Button>
                 </TableCell>
               </TableRow>
                       ))

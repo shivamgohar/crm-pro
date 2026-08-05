@@ -7,7 +7,9 @@ import {
   Stack,
 } from "@mui/material";
 
-function CustomerStatusCard() {
+function CustomerStatusCard({
+  summary,
+}) {
   return (
     <Card elevation={3}>
       <CardContent>
@@ -28,15 +30,31 @@ function CustomerStatusCard() {
             color="success"
           />
 
-          <Chip
-            label="AMC Pending"
-            color="warning"
-          />
+     <Chip
+label={
+summary?.amcActive
+? "AMC Active"
+: "AMC Expired"
+}
+color={
+summary?.amcActive
+? "success"
+: "error"
+}
+/>
 
-          <Chip
-            label="Payment Clear"
-            color="primary"
-          />
+       <Chip
+label={
+summary?.pendingAmount > 0
+? "Payment Pending"
+: "Payment Clear"
+}
+color={
+summary?.pendingAmount > 0
+? "warning"
+: "success"
+}
+/>
 
         </Stack>
 
@@ -47,7 +65,7 @@ function CustomerStatusCard() {
         </Typography>
 
         <Typography variant="h5">
-          ₹0
+        ₹{summary?.pendingAmount ?? 0}
         </Typography>
 
         <Divider sx={{ my: 2 }} />
@@ -57,7 +75,7 @@ function CustomerStatusCard() {
         </Typography>
 
         <Typography variant="subtitle1">
-          --
+         {summary?.lastService || "--"}
         </Typography>
 
         <Divider sx={{ my: 2 }} />
@@ -67,7 +85,12 @@ function CustomerStatusCard() {
         </Typography>
 
         <Typography variant="subtitle1">
-          --
+       {
+summary?.nextService
+  ? new Date(summary.nextService)
+      .toLocaleDateString("en-IN")
+  : "--"
+}
         </Typography>
 
       </CardContent>

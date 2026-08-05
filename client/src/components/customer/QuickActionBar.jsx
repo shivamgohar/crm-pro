@@ -7,7 +7,8 @@ import PrintIcon from "@mui/icons-material/Print";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 
 function QuickActionBar({
-    onAddService
+    onAddService,
+    onEditCustomer
 }) {
 
 
@@ -34,12 +35,13 @@ onClick={onAddService}
         Receive Payment
       </Button>
 
-      <Button
-        variant="outlined"
-        startIcon={<EditIcon />}
-      >
-        Edit Customer
-      </Button>
+    <Button
+  variant="outlined"
+  startIcon={<EditIcon />}
+  onClick={onEditCustomer}
+>
+  Edit Customer
+</Button>
 
       <Button
         variant="outlined"

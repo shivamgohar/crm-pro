@@ -6,13 +6,16 @@ import CustomerStatusCard from "../components/customer/CustomerStatusCard";
 import QuickActionBar from "../components/customer/QuickActionBar";
 import AddServiceDialog from "../components/customer/AddServiceDialog";
 import ServiceHistory from "../components/customer/ServiceHistory";
+import CustomerDialog from "../components/customer/CustomerDialog";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-// import VisibilityIcon from "@mui/icons-material/Visibility";
-// import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-// import AddIcon from "@mui/icons-material/Add";
+
+import {
+  getProfileCustomerFields,
+  // getListCustomerFields,
+} from "../services/customerFieldService";
 
 
 import {
@@ -34,10 +37,16 @@ function CustomerProfile() {
 
   const [services, setServices] = useState([]);
   const [openServiceDialog, setOpenServiceDialog] = useState(false);
+  const [openCustomerDialog, setOpenCustomerDialog] = useState(false);
+  const [profileFields, setProfileFields] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
+ 
 
   const fetchCustomer = async () => {
     try {
-      const response = await api.get(`/customers/code/${id}`);
+      // const response = await api.get(`/customers/code/${id}`);
+        const response = await api.get(`/customers/${id}`);
 
       setCustomer(response.data.customer);
     } catch (error) {
@@ -45,20 +54,33 @@ function CustomerProfile() {
     }
   };
 
-  const fetchServices = async () => {
 
-    
-    try {
-      // const response = await api.get(`/services/customer/${id}`);
-      const response = await api.get(`/services/customer-code/${id}`);
+const fetchServices = async () => {
+  try {
+    const response = await api.get(
+      `/services/customer-code/${customer.customer_code}`
+    );
 
-      setServices(response.data);
-      console.log("API Response:", response.data);
-      console.log("Fetched:", response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    setServices(response.data);
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const fetchCustomerSummary = async () => {
+  try {
+
+    const response = await api.get(
+      `/services/customer-summary/${customer.customer_code}`
+    );
+
+    setSummary(response.data);
+
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   const handleOpenServiceDialog = () => {
     setOpenServiceDialog(true);
@@ -68,11 +90,41 @@ function CustomerProfile() {
     setOpenServiceDialog(false);
   };
 
-  useEffect(() => {
-    fetchCustomer();
-    fetchServices();
-  }, [id]);
+  const handleEditCustomer = () => {
+  setOpenCustomerDialog(true);
+};
 
+
+const handleEditService = (service) => {
+  setSelectedService(service);
+  setOpenServiceDialog(true);
+};
+
+
+const loadProfileFields = async () => {
+  try {
+    const data = await getProfileCustomerFields();
+    setProfileFields(data);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+
+useEffect(() => {
+  fetchCustomer();
+  loadProfileFields();
+}, [id]);
+
+
+useEffect(() => {
+  if (customer?.customer_code) {
+    fetchServices();
+    fetchCustomerSummary();
+  }
+}, [customer]);
+
+    
   if (!customer) {
     return <h2>Loading...</h2>;
   }
@@ -89,24 +141,36 @@ function CustomerProfile() {
           variant="outlined"
           onClick={() => navigate("/customers")}
         >
-          Back
+          Customers
         </Button>
       </Stack>
 
-      <QuickActionBar onAddService={handleOpenServiceDialog} />
+    <QuickActionBar
+  onAddService={handleOpenServiceDialog}
+  onEditCustomer={handleEditCustomer}
+/>
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
-          <CustomerSummaryCard customer={customer} />
+          {/* <CustomerSummaryCard customer={customer} /> */}
+          <CustomerSummaryCard
+    customer={customer}
+    fields={profileFields}
+/>
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <CustomerStatusCard />
+         <CustomerStatusCard
+  summary={summary}
+/>
         </Grid>
       </Grid>
 
       <Box sx={{ mt: 4 }}>
-        <ServiceHistory services={services} />
+       <ServiceHistory
+  services={services}
+  onEditService={handleEditService}
+/>
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6">Payment History</Typography>
@@ -156,12 +220,27 @@ function CustomerProfile() {
         </Accordion>
       </Box>
 
-      <AddServiceDialog
-        open={openServiceDialog}
-        handleClose={handleCloseServiceDialog}
-        customer={customer}
-        onServiceAdded={fetchServices}
-      />
+<AddServiceDialog
+  open={openServiceDialog}
+  handleClose={handleCloseServiceDialog}
+  customer={customer}
+  service={selectedService}
+  onServiceAdded={() => {
+    fetchServices();
+    fetchCustomerSummary();
+    setSelectedService(null);
+  }}
+/>
+
+      <CustomerDialog
+  open={openCustomerDialog}
+  onClose={() => setOpenCustomerDialog(false)}
+  customer={customer}
+  onSuccess={() => {
+    fetchCustomer();
+    setOpenCustomerDialog(false);
+  }}
+/>
     </Box>
   );
 }

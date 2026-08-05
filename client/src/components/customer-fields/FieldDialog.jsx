@@ -14,6 +14,7 @@ import {
   MenuItem,
   FormControlLabel,
   Checkbox,
+  Typography,
 } from "@mui/material";
 import {
     addCustomerField,
@@ -28,6 +29,16 @@ function FieldDialog({ open, onClose, onSuccess, mode = "add", field = null }) {
   const { enqueueSnackbar } = useSnackbar();
   const [loading] = useState(false);
 
+  const [fieldGroup, setFieldGroup] = useState("customer");
+
+const [showIn, setShowIn] = useState({
+  list: true,
+  profile: true,
+  dialog: true,
+  import: true,
+  search: true,
+});
+
   const handleSave = async () => {
     if (!fieldLabel.trim()) {
       enqueueSnackbar("Field Name is required", {
@@ -38,22 +49,25 @@ function FieldDialog({ open, onClose, onSuccess, mode = "add", field = null }) {
 
     try {
     if (mode === "add") {
-
-    await addCustomerField({
-        field_label: fieldLabel,
-        field_type: fieldType,
-        is_required: required,
-        is_visible: visible
-    });
+await addCustomerField({
+    field_label: fieldLabel,
+    field_type: fieldType,
+    field_group: fieldGroup,
+    show_in: showIn,
+    is_required: required,
+    is_visible: visible
+});
 
 } else {
 
-    await updateCustomerField(field.id, {
-        field_label: fieldLabel,
-        field_type: fieldType,
-        is_required: required,
-        is_visible: visible
-    });
+ await updateCustomerField(field.id,{
+    field_label: fieldLabel,
+    field_type: fieldType,
+    field_group: fieldGroup,
+    show_in: showIn,
+    is_required: required,
+    is_visible: visible
+});
 
 }
 
@@ -61,6 +75,15 @@ function FieldDialog({ open, onClose, onSuccess, mode = "add", field = null }) {
       setFieldType("text");
       setRequired(false);
       setVisible(true);
+      setFieldGroup("customer");
+
+setShowIn({
+  list: true,
+  profile: true,
+  dialog: true,
+  import: true,
+  search: true,
+});
 
       onSuccess();
       onClose();
@@ -86,11 +109,31 @@ function FieldDialog({ open, onClose, onSuccess, mode = "add", field = null }) {
       setFieldType(field.field_type);
       setRequired(field.is_required);
       setVisible(field.is_visible);
+      setFieldGroup(field.field_group || "customer");
+
+setShowIn(
+  field.show_in || {
+    list: true,
+    profile: true,
+    dialog: true,
+    import: true,
+    search: true,
+  }
+);
     } else {
       setFieldLabel("");
       setFieldType("text");
       setRequired(false);
       setVisible(true);
+      setFieldGroup("customer");
+
+setShowIn({
+  list: true,
+  profile: true,
+  dialog: true,
+  import: true,
+  search: true,
+});
     }
   }, [mode, field, open]);
 
@@ -134,7 +177,108 @@ function FieldDialog({ open, onClose, onSuccess, mode = "add", field = null }) {
             <MenuItem value="checkbox">Checkbox</MenuItem>
           </Select>
         </FormControl>
+          <FormControl fullWidth margin="normal">
+  <InputLabel>Field Group</InputLabel>
 
+  <Select
+    value={fieldGroup}
+    label="Field Group"
+    onChange={(e)=>setFieldGroup(e.target.value)}
+  >
+    <MenuItem value="customer">
+      Customer Information
+    </MenuItem>
+
+    <MenuItem value="service">
+      Service Information
+    </MenuItem>
+  </Select>
+</FormControl>
+
+<Typography sx={{ mt:2,fontWeight:600 }}>
+  Show In
+</Typography>
+
+<FormControlLabel
+  control={
+    <Checkbox
+      checked={showIn.list}
+      onChange={(e)=>
+        setShowIn({
+          ...showIn,
+          list:e.target.checked
+        })
+      }
+    />
+  }
+  label="Customer List"
+/>
+
+<FormControlLabel
+  control={
+    <Checkbox
+      checked={showIn.profile}
+      onChange={(e)=>
+        setShowIn({
+          ...showIn,
+          profile:e.target.checked
+        })
+      }
+    />
+  }
+  label="Customer Profile"
+/>
+
+<FormControlLabel
+  control={
+    <Checkbox
+      checked={showIn.dialog}
+      onChange={(e)=>
+        setShowIn({
+          ...showIn,
+          dialog:e.target.checked
+        })
+      }
+    />
+  }
+  label="Add/Edit Customer"
+/>
+
+<FormControlLabel
+  control={
+    <Checkbox
+      checked={showIn.import}
+      onChange={(e)=>
+        setShowIn({
+          ...showIn,
+          import:e.target.checked
+        })
+      }
+    />
+  }
+  label="Import"
+/>
+
+<FormControlLabel
+  control={
+    <Checkbox
+      checked={showIn.search}
+      onChange={(e)=>
+        setShowIn({
+          ...showIn,
+          search:e.target.checked
+        })
+      }
+    />
+  }
+  label="Search"
+/>
+
+
+
+<Typography sx={{ mt:2,fontWeight:600 }}>
+  
+</Typography>
         <FormControlLabel
           control={
             <Checkbox

@@ -33,6 +33,8 @@ const addCustomerField = async (req, res) => {
         const {
             field_label,
             field_type,
+            field_group,
+            show_in,
             is_required,
             is_visible
         } = req.body;
@@ -75,21 +77,31 @@ const addCustomerField = async (req, res) => {
             `
             INSERT INTO company_customer_fields
             (
-                field_key,
-                field_label,
-                field_type,
-                is_required,
-                is_visible,
-                display_order
-            )
-            VALUES
-            ($1,$2,$3,$4,$5,$6)
-            RETURNING *
+                 field_key,
+    field_label,
+    field_type,
+    field_group,
+    show_in,
+    is_required,
+    is_visible,
+    display_order
+)
+VALUES
+($1,$2,$3,$4,$5,$6,$7,$8)
+RETURNING *
             `,
             [
                 field_key,
                 field_label,
                 field_type || "text",
+                field_group || "customer",
+                JSON.stringify(show_in || {
+                    list: true,
+                    profile: true,
+                    dialog: true,
+                    import: true,
+                    search: true
+                }),
                 is_required || false,
                 is_visible ?? true,
                 display_order
@@ -118,6 +130,8 @@ const updateCustomerField = async (req, res) => {
         const {
             field_label,
             field_type,
+            field_group,
+            show_in,
             is_required,
             is_visible
         } = req.body;
@@ -146,19 +160,23 @@ const updateCustomerField = async (req, res) => {
 
         const result = await pool.query(
             `
-            UPDATE company_customer_fields
-            SET
-                field_label=$1,
-                field_type=$2,
-                is_required=$3,
-                is_visible=$4,
-                updated_at=NOW()
-            WHERE id=$5
-            RETURNING *
+          UPDATE company_customer_fields
+SET
+    field_label = $1,
+    field_type = $2,
+    field_group = $3,
+    show_in = $4,
+    is_required = $5,
+    is_visible = $6,
+    updated_at = NOW()
+WHERE id = $7
+RETURNING *
             `,
             [
                 field_label,
                 field_type,
+                field_group,
+                JSON.stringify(show_in),
                 is_required,
                 is_visible,
                 id
@@ -307,7 +325,7 @@ const restoreCustomerField = async (req, res) => {
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
-        `,[id]);
+        `, [id]);
 
         res.json(result.rows[0]);
 
@@ -316,7 +334,7 @@ const restoreCustomerField = async (req, res) => {
         console.error(error);
 
         res.status(500).json({
-            message:"Failed to restore field"
+            message: "Failed to restore field"
         });
 
     }
@@ -324,9 +342,9 @@ const restoreCustomerField = async (req, res) => {
 };
 
 const getImportCustomerFields = async (req, res) => {
-  try {
+    try {
 
-    const result = await pool.query(`
+        const result = await pool.query(`
      SELECT
         id,
         field_key,
@@ -341,26 +359,96 @@ const getImportCustomerFields = async (req, res) => {
     ORDER BY display_order ASC
     `);
 
+        res.json(result.rows);
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to fetch import fields"
+        });
+
+    }
+};
+
+
+// const getDialogCustomerFields = async (req, res) => {
+//   try {
+
+//     const result = await pool.query(`
+//       SELECT *
+//       FROM company_customer_fields
+//       WHERE
+//         field_group = 'customer'
+//         AND is_visible = true
+//         AND (show_in->>'dialog')::boolean = true
+//       ORDER BY display_order ASC
+//     `);
+
+//     res.json(result.rows);
+
+//   } catch (error) {
+
+//     console.error(error);
+
+//     res.status(500).json({
+//       message: "Failed to fetch dialog fields",
+//     });
+
+//   }
+// };
+
+const getDialogCustomerFields = async (req, res) => {
+    try {
+        const result = await pool.query(`
+      SELECT *
+      FROM company_customer_fields
+      WHERE
+        is_visible = true
+        AND (show_in->>'dialog')::boolean = true
+      ORDER BY display_order ASC
+    `);
+
+        res.json(result.rows);
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to fetch dialog fields"
+        });
+    }
+};
+
+const getListCustomerFields = async (req, res) => {
+
+    const result = await pool.query(`
+    SELECT *
+    FROM company_customer_fields
+   WHERE
+    is_visible = true
+    AND field_group = 'customer'
+    AND show_in->>'list'='true'
+    AND field_key NOT IN ('customer_name', 'customer_code')
+
+    ORDER BY display_order
+  `);
+
     res.json(result.rows);
 
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      message: "Failed to fetch import fields"
-    });
-
-  }
 };
+
 
 module.exports = {
     getCustomerFields,
     addCustomerField,
     updateCustomerField,
-     hideCustomerField,
-     reorderCustomerFields,
-     getAllCustomerFields,
-     restoreCustomerField,
-     getImportCustomerFields,
+    hideCustomerField,
+    reorderCustomerFields,
+    getAllCustomerFields,
+    restoreCustomerField,
+    getImportCustomerFields,
+    getDialogCustomerFields,
+    getListCustomerFields,
 };

@@ -44,3 +44,19 @@ export const reorderCustomerFields = async (fields) => {
     );
     return response.data;
 };
+
+export const getDialogCustomerFields = async () => {
+    const response = await api.get("/company/customer-fields/dialog");
+    return response.data;
+};
+
+export const getProfileCustomerFields = async () => {
+    const response = await api.get("/company/customer-fields/profile");
+    return response.data;
+};
+
+
+export const getListCustomerFields = async () => {
+  const response = await api.get("/company/customer-fields/list");
+  return response.data;
+};

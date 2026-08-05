@@ -5,12 +5,15 @@ const db = require("../config/db");
 
 const {
   addService,
+  getCustomerSummary,
+  updateService,
 } = require("../controllers/serviceController");
 
 
 router.get("/customer-code/:customerCode", async (req, res) => {
   try {
     const { customerCode } = req.params;
+     console.log("Customer Code:", customerCode);
 
     const result = await db.query(
       `
@@ -62,7 +65,11 @@ ORDER BY service_date DESC;
 });
 
 
-
+router.get(
+    "/customer-summary/:customerCode",
+    getCustomerSummary
+);
+router.put("/:id", updateService);
 
 router.post("/", addService);
 

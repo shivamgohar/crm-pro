@@ -56,6 +56,47 @@ const theme = createTheme({
 
   },
 
+
+  custom: {
+
+  layout: {
+
+    sidebarWidth: 220,
+
+    navbarHeight: 64,
+
+    pagePadding: 24,
+
+  },
+
+  card: {
+
+    radius: 12,
+
+    padding: 16,
+
+  },
+
+  input: {
+
+    height: 38,
+
+    radius: 10,
+
+  },
+
+  button: {
+
+    height: 38,
+
+    radius: 10,
+
+  },
+
+},
+
 });
+
+
 
 export default theme;

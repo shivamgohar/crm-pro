@@ -194,11 +194,16 @@ const getCustomers = async (req, res) => {
 
   try {
 
-    const {
-      search = "",
-      page = 1,
-      limit = 10
-    } = req.query;
+   const {
+  search = "",
+  searchBy = "all",
+  status = "all",
+  area = "all",
+  sort = "name",
+  page = 1,
+  limit = 10,
+} = req.query;
+
 
     const currentPage = Number(page);
     const pageSize = Number(limit);
@@ -259,37 +264,62 @@ WHERE
 
     // );
 
-    const result = await db.query(
-      `
+
+    let whereClause = "";
+const values = [];
+
+if (search === "") {
+  whereClause = "TRUE";
+} else {
+  values.push(search);
+
+  switch (searchBy) {
+    case "customer_code":
+      whereClause = `customer_code ILIKE '%' || $1 || '%'`;
+      break;
+
+    case "phone":
+      whereClause = `phone ILIKE '%' || $1 || '%'`;
+      break;
+
+    case "name":
+      whereClause = `name ILIKE '%' || $1 || '%'`;
+      break;
+
+    case "address":
+      whereClause = `address ILIKE '%' || $1 || '%'`;
+      break;
+
+    default:
+      whereClause = `
+        customer_code ILIKE '%' || $1 || '%'
+        OR name ILIKE '%' || $1 || '%'
+        OR phone ILIKE '%' || $1 || '%'
+        OR email ILIKE '%' || $1 || '%'
+        OR address ILIKE '%' || $1 || '%'
+      `;
+  }
+}
+
+const result = await db.query(
+  `
 SELECT DISTINCT ON (customer_code) *
 
 FROM customers
 
-WHERE
-
-    $1 = ''
-
-    OR customer_code ILIKE '%' || $1 || '%'
-
-    OR name ILIKE '%' || $1 || '%'
-
-    OR phone ILIKE '%' || $1 || '%'
-
-    OR email ILIKE '%' || $1 || '%'
+WHERE ${whereClause}
 
 ORDER BY customer_code, id DESC
 
-LIMIT $2
-OFFSET $3
-
-
+LIMIT $${values.length + 1}
+OFFSET $${values.length + 2}
 `,
-      [
-        search,
-        pageSize,
-        offset
-      ]
-    );
+[
+  ...values,
+  pageSize,
+  offset,
+]
+);
     res.json({
       success: true,
       customers: result.rows,
@@ -316,20 +346,18 @@ OFFSET $3
 };
 
 const getCustomerById = async (req, res) => {
-
   try {
+    const { id } = req.params;
 
-    const { customerCode } = req.params;
-
+    // Main Customer
     const result = await db.query(
       `
       SELECT *
       FROM customers
-      WHERE customer_code  = $1
-      ORDER BY id DESC
+      WHERE id = $1
       LIMIT 1;
       `,
-      [customerCode]
+      [id]
     );
 
     if (result.rows.length === 0) {
@@ -339,40 +367,124 @@ const getCustomerById = async (req, res) => {
       });
     }
 
+    const customer = result.rows[0];
+
+    // Dynamic Fields
+    const fieldValues = await db.query(
+      `
+      SELECT
+          ccf.field_key,
+          cfv.field_value
+      FROM customer_field_values cfv
+      JOIN company_customer_fields ccf
+          ON cfv.field_id = ccf.id
+      WHERE cfv.customer_id = $1
+      `,
+      [id]
+    );
+
+    // Merge Customer + Dynamic Fields
+    const customerData = {
+      ...customer,
+    };
+
+    fieldValues.rows.forEach((field) => {
+      customerData[field.field_key] = field.field_value;
+    });
+
     res.json({
       success: true,
-      customer: result.rows[0],
+      customer: customerData,
     });
 
   } catch (error) {
-
     console.error(error);
 
     res.status(500).json({
       success: false,
       message: "Server Error",
     });
-
   }
-
 };
-
 const updateCustomer = async (req, res) => {
   try {
 
     const { id } = req.params;
 
-    const { name, phone, email, address } = req.body;
+    // const { name, phone, email, address } = req.body;
+    const { fields } = req.body;
+
+    await db.query("BEGIN");
 
     await db.query(
       `UPDATE customers
-       SET name=$1,
-           phone=$2,
-           email=$3,
-           address=$4
-       WHERE id=$5`,
-      [name, phone, email, address, id]
+
+SET
+
+customer_code=$1,
+
+name=$2,
+
+phone=$3
+
+WHERE id=$4`,
+      [
+ fields.customer_code,
+ fields.customer_name,
+ fields.phone,
+ id
+]
     );
+
+    const fieldsResult = await db.query(`
+  SELECT id, field_key
+  FROM company_customer_fields
+`);
+
+const fieldMap = {};
+
+fieldsResult.rows.forEach((field) => {
+  fieldMap[field.field_key] = field.id;
+});
+
+
+await db.query(
+  `
+  DELETE FROM customer_field_values
+  WHERE customer_id = $1
+  `,
+  [id]
+);
+
+for (const [fieldKey, fieldValue] of Object.entries(fields)) {
+
+  if (
+    fieldKey === "customer_code" ||
+    fieldKey === "customer_name" ||
+    fieldKey === "phone"
+  ) {
+    continue;
+  }
+
+  if (!fieldMap[fieldKey]) {
+    continue;
+  }
+
+  await db.query(
+    `
+    INSERT INTO customer_field_values
+    (customer_id, field_id, field_value)
+    VALUES ($1, $2, $3)
+    `,
+    [
+      id,
+      fieldMap[fieldKey],
+      fieldValue,
+    ]
+  );
+}
+
+await db.query("COMMIT");
 
     res.json({
       success: true,
@@ -380,6 +492,7 @@ const updateCustomer = async (req, res) => {
     });
 
   } catch (error) {
+    await db.query("ROLLBACK");
 
     console.error(error);
 

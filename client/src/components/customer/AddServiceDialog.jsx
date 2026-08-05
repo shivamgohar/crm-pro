@@ -37,8 +37,12 @@ import { useEffect } from "react";
 
 import { useSnackbar } from "notistack";
 
+import {
+    updateService,
+} from "../../services/serviceService";
 
-function AddServiceDialog({ open, handleClose, customer, onServiceAdded, }) {
+
+function AddServiceDialog({ open, handleClose, customer, service, onServiceAdded, }) {
   const [serviceDate, setServiceDate] = useState(dayjs());
   const [products, setProducts] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
@@ -120,42 +124,68 @@ const handleProductChange = (index, field, value) => {
   const pendingAmount =
     (Number(formData.totalAmount) || 0) -
     (Number(formData.receivedAmount) || 0);
+
+
 const handleSaveService = async () => {
-
-
   try {
-    const response = await api.post("/services", {
-  customer_code: customer.customer_code,
-  service_date: serviceDate.format("YYYY-MM-DD"),
-  service: formData.serviceType,
-  engineer: formData.engineer,
-  remark: formData.remark,
-  amount: formData.totalAmount,
-  received_amount: formData.receivedAmount,
-  pending_amount: pendingAmount,
-  status: formData.serviceStatus,
-  products: selectedProducts,
-});
 
+    if (service) {
 
-enqueueSnackbar(response.data.message, {
-  variant: "success",
-});
+      // UPDATE
+      const response = await updateService(service.id, {
+        service_date: serviceDate.format("YYYY-MM-DD"),
+        service: formData.serviceType,
+        engineer: formData.engineer,
+        remark: formData.remark,
+        amount: formData.totalAmount,
+        received_amount: formData.receivedAmount,
+        pending_amount:
+          Number(formData.totalAmount) -
+          Number(formData.receivedAmount),
+        status: formData.serviceStatus,
+      });
+
+      enqueueSnackbar(response.message, {
+        variant: "success",
+      });
+
+    } else {
+
+      // CREATE
+      const response = await api.post("/services", {
+        customer_code: customer.customer_code,
+        service_date: serviceDate.format("YYYY-MM-DD"),
+        service: formData.serviceType,
+        engineer: formData.engineer,
+        remark: formData.remark,
+        amount: formData.totalAmount,
+        received_amount: formData.receivedAmount,
+        pending_amount: pendingAmount,
+        status: formData.serviceStatus,
+        products: selectedProducts,
+      });
+
+      enqueueSnackbar(response.data.message, {
+        variant: "success",
+      });
+
+    }
 
     onServiceAdded();
-
     handleClose();
 
   } catch (error) {
+
     console.error(error);
 
     enqueueSnackbar(
-        error.response?.data?.message || "Something went wrong",
-        {
-            variant: "error",
-        }
+      error.response?.data?.message || "Something went wrong",
+      {
+        variant: "error",
+      }
     );
-}
+
+  }
 };
 
 useEffect(() => {
@@ -163,6 +193,48 @@ useEffect(() => {
     fetchProducts();
   }
 }, [open]);
+
+
+useEffect(() => {
+
+  if (!open) return;
+
+  if (service) {
+
+    setServiceDate(dayjs(service.service_date));
+
+    setFormData({
+      serviceType: service.service || "",
+      engineer: service.engineer || "",
+      serviceStatus: service.status || "Pending",
+      totalAmount: service.amount || "",
+      receivedAmount: service.received_amount || "",
+      remark: service.remark || "",
+    });
+
+  } else {
+
+    setServiceDate(dayjs());
+
+    setFormData({
+      serviceType: "",
+      engineer: "",
+      serviceStatus: "Pending",
+      totalAmount: "",
+      receivedAmount: "",
+      remark: "",
+    });
+
+    setSelectedProducts([
+      {
+        productId: "",
+        quantity: 1,
+      },
+    ]);
+
+  }
+
+}, [service, open]);
 
   return (
     <Dialog
@@ -182,9 +254,9 @@ useEffect(() => {
           <BuildIcon color="primary" />
 
           <Box>
-            <Typography variant="h5" fontWeight={700}>
-              Add New Service
-            </Typography>
+          <Typography variant="h5" fontWeight={700}>
+  {service ? "Edit Service" : "Add New Service"}
+</Typography>
 
             <Typography variant="body2" color="text.secondary">
               Record a new customer service visit.
@@ -480,9 +552,12 @@ useEffect(() => {
           Cancel
         </Button>
 
-        <Button variant="contained" onClick={handleSaveService}>
-          Save Service
-        </Button>
+      <Button
+  variant="contained"
+  onClick={handleSaveService}
+>
+  {service ? "Update Service" : "Save Service"}
+</Button>
       </DialogActions>
     </Dialog>
   );

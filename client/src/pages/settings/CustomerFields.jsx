@@ -159,6 +159,8 @@ const handleDragEnd = async (result) => {
             <TableCell>Field</TableCell>
 
             <TableCell>Type</TableCell>
+            <TableCell>Group</TableCell>
+<TableCell>Show In</TableCell>
 
             <TableCell>Required</TableCell>
 
@@ -188,7 +190,7 @@ const handleDragEnd = async (result) => {
              ref={provided.innerRef}
                 // {...provided.draggableProps}
                 // {...provided.dragHandleProps}
-                ref={provided.innerRef}
+              
     {...provided.draggableProps}
             
             >
@@ -207,6 +209,34 @@ const handleDragEnd = async (result) => {
               <TableCell>{field.field_label}</TableCell>
 
               <TableCell>{field.field_type}</TableCell>
+              <TableCell>
+  <Chip
+    label={
+      field.field_group === "customer"
+        ? "Customer"
+        : "Service"
+    }
+    size="small"
+    color={
+      field.field_group === "customer"
+        ? "primary"
+        : "secondary"
+    }
+  />
+</TableCell>
+
+<TableCell>
+  {Object.entries(field.show_in || {})
+    .filter(([, value]) => value)
+    .map(([key]) => (
+      <Chip
+        key={key}
+        label={key}
+        size="small"
+        sx={{ mr: 0.5, mb: 0.5 }}
+      />
+    ))}
+</TableCell>
 
               <TableCell>
                 <Chip
@@ -229,7 +259,7 @@ const handleDragEnd = async (result) => {
 <TableCell>
 
     <Tooltip title="Edit">
-        <IconButton color="primary"   color="primary"
+        <IconButton color="primary" 
         onClick={() => handleEdit(field)}>
             <EditIcon />
         </IconButton>
