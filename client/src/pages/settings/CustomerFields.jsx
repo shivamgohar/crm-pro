@@ -10,12 +10,13 @@ import Tooltip from "@mui/material/Tooltip";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { AppButton } from "../../components/ui";
 
 import {
   Box,  
   Paper,
   Typography,
-  Button,
+ 
   Table,
   TableBody,
   TableCell,
@@ -28,8 +29,7 @@ import {
 
 import {
     getAllCustomerFields,
-    // addCustomerField,
-    // updateCustomerField,
+  
     archiveCustomerField,
     restoreCustomerField,
     reorderCustomerFields,
@@ -129,20 +129,20 @@ const handleDragEnd = async (result) => {
 
 
         <Typography variant="h4">Customer Fields</Typography>
-           <Button
+           <AppButton
           startIcon={<ArrowBackIcon />}
           variant="outlined"
           onClick={() => navigate("/settings")}
         >
           Back
-        </Button>
+        </AppButton>
 
-       <Button
+       <AppButton
     variant="contained"
     onClick={handleAdd}
 >
     + Add Field
-</Button>
+</AppButton>
       </Box>
 
    

@@ -4,7 +4,6 @@ import api from "../api/api";
 
 import { useSnackbar } from "notistack";
 import LoadingSpinner from "../components/LoadingSpinner";
-// import SearchBar from "../components/SearchBar";
 import useDebounce from "../hooks/useDebounce";
 import Pagination from "@mui/material/Pagination";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +13,13 @@ import CustomerToolbar from "../components/customer/CustomerToolbar";
 import AddIcon from "@mui/icons-material/Add";
 import { getListCustomerFields } from "../services/customerFieldService";
 
-import { Box, Typography, Button ,Paper} from "@mui/material";
+import { Box,Typography, Paper } from "@mui/material";
+import {
+  AppButton,
+  AppPage,
+  AppHeader,
+
+} from "../components/ui";
 
 function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -92,39 +97,23 @@ useEffect(() => {
   sort,
 ]);
   return (
-    <>
+   <AppPage>
       <LoadingSpinner open={loading} />
-      <Box>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Box>
-            <Typography variant="h4" fontWeight="bold">
-              Customers
-            </Typography>
+     
 
-            <Typography variant="body2" color="text.secondary">
-              {pagination.totalItems} Customers
-            </Typography>
-          </Box>
 
-          <Box sx={{ display: "flex", gap: 2 }}>
-    
-
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setOpen(true)}
-            >
-              Add Customer
-            </Button>
-          </Box>
-        </Box>
+       <AppHeader
+  title="Customers"
+  subtitle={`${pagination.totalItems || 0} Customers`}
+  actions={
+    <AppButton
+      startIcon={<AddIcon />}
+      onClick={() => setOpen(true)}
+    >
+      Add Customer
+    </AppButton>
+  }
+/>
 
      
 
@@ -202,8 +191,8 @@ useEffect(() => {
           onSuccess={fetchCustomers}
         />
 
-      </Box>
-    </>
+      
+   </AppPage>
   );
 }
 

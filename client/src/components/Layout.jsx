@@ -1,24 +1,10 @@
-import Navbar from "./Navbar";
-import Sidebar from "./Sidebar";
-import "../styles/Layout.css";
+import AppLayout from "./layout/AppLayout";
 
 function Layout({ children }) {
   return (
-    <div className="layout">
-
-      <Sidebar />
-
-      <div className="main-content">
-
-        <Navbar />
-
-        <div className="page-content">
-          {children}
-        </div>
-
-      </div>
-
-    </div>
+    <AppLayout>
+      {children}
+    </AppLayout>
   );
 }
 

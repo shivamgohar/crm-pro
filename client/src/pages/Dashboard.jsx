@@ -23,7 +23,7 @@ function Dashboard() {
     customers: 0,
     products: 0,
     orders: 0,
-    revenue: 0, 
+    revenue: 0,
   });
   const [recentOrders, setRecentOrders] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
@@ -46,14 +46,14 @@ function Dashboard() {
     fetchDashboard();
   }, []);
 
-  
-
   return (
-
-
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" fontWeight="bold" mb={4}>
-       Dashboard
+      <Typography variant="h3" fontWeight={700} gutterBottom>
+        Dashboard
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ mb: 4 }}>
+        Welcome back, Steve 👋
       </Typography>
 
       <Grid container spacing={3}>
@@ -61,7 +61,9 @@ function Dashboard() {
           <DashboardCard
             title="Customers"
             value={stats.customers}
-            icon={<PeopleIcon color="primary" sx={{ fontSize: 30 }} />}
+            color="#2563eb"
+            change="+12%"
+            icon={<PeopleIcon sx={{ color: "#2563eb" }} />}
           />
         </Grid>
 
@@ -69,7 +71,9 @@ function Dashboard() {
           <DashboardCard
             title="Products"
             value={stats.products}
-            icon={<Inventory2Icon color="warning" sx={{ fontSize: 30 }} />}
+            color="#f59e0b"
+            change="+3%"
+            icon={<Inventory2Icon sx={{ color: "#f59e0b" }} />}
           />
         </Grid>
 
@@ -77,7 +81,9 @@ function Dashboard() {
           <DashboardCard
             title="Orders"
             value={stats.orders}
-            icon={<ShoppingCartIcon color="success" sx={{ fontSize: 30 }} />}
+            color="#22c55e"
+            change="+8%"
+            icon={<ShoppingCartIcon sx={{ color: "#22c55e" }} />}
           />
         </Grid>
 
@@ -85,151 +91,99 @@ function Dashboard() {
           <DashboardCard
             title="Revenue"
             value={`₹ ${Number(stats.revenue).toLocaleString("en-IN")}`}
-            icon={<PaidIcon color="secondary" sx={{ fontSize: 30 }} />}
-          />
+            color="#9333ea"
+            change="+15%"
+            icon={<PaidIcon sx={{ color: "#9333ea" }} />}
+          /> 
         </Grid>
       </Grid>
 
-      
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Box sx={{ mt: 5 }}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h5" fontWeight="bold" mb={2}>
+                Recent Orders
+              </Typography>
 
-<Grid container spacing={3}>
+              <List>
+                {recentOrders.length === 0 ? (
+                  <Typography>No Recent Orders</Typography>
+                ) : (
+                  recentOrders.map((order, index) => (
+                    <Box key={index}>
+                      <ListItem>
+                        <Avatar sx={{ mr: 2 }}>
+                          {order.customer_name.charAt(0).toUpperCase()}
+                        </Avatar>
+                        <ListItemText
+                          primary={`${order.customer_name} • ${order.product_name}`}
+                          secondary={`Qty : ${order.quantity} | ₹ ${Number(order.total).toLocaleString("en-IN")}`}
+                        />
+                      </ListItem>
 
-<Grid size={{xs:12, md:8}}>
-
-<Box sx={{ mt: 5 }}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h5" fontWeight="bold" mb={2}>
-            Recent Orders
-          </Typography>
-
-          <List>
-            {recentOrders.length === 0 ? (
-              <Typography>No Recent Orders</Typography>
-            ) : (
-              recentOrders.map((order, index) => (
-                <Box key={index}>
-                  <ListItem>
-                    
-  <Avatar sx={{ mr: 2 }}>
-    {order.customer_name.charAt(0).toUpperCase()}
-  </Avatar>
-                    <ListItemText
-                      primary={`${order.customer_name} • ${order.product_name}`}
-                      secondary={`Qty : ${order.quantity} | ₹ ${Number(order.total).toLocaleString("en-IN")}`}
-                    />
-                  </ListItem>
-
-                  {index !== recentOrders.length - 1 && <Divider />}
-                </Box>
-              ))
-            )}
-          </List>
-        </Paper>
-      </Box>
-
-</Grid>
-
-<Grid size={{xs:12, md:4}}>
-
-
-      <Box sx={{ mt: 4 }}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h5" fontWeight="bold" mb={2}>
-            ⚠ Low Stock Products
-          </Typography>
-
-          <List>
-            {lowStockProducts.length === 0 ? (
-              <Typography>No Low Stock Products</Typography>
-            ) : (
-              lowStockProducts.map((product, index) => (
-                <Box key={product.id}>
-                  <ListItem>
-                    <ListItemText
-                      primary={product.name}
-                      secondary={`Stock : ${product.stock}`}
-                    />
-                  </ListItem>
-
-                  {index !== lowStockProducts.length - 1 && <Divider />}
-                </Box>
-              ))
-            )}
-          </List>
-        </Paper>
-        <Paper sx={{ p: 3, mt: 3 }}>
-
-  <Typography
-    variant="h5"
-    fontWeight="bold"
-    mb={2}
-  >
-    🏆 Top Selling Products
-  </Typography>
-
-  <List>
-
-    {
-
-      topSellingProducts.length === 0 ?
-
-      (
-
-        <Typography>
-
-          No Sales Yet
-
-        </Typography>
-
-      )
-
-      :
-
-      (
-
-        topSellingProducts.map((product, index) => (
-
-          <Box key={product.id}>
-
-            <ListItem>
-
-              <ListItemText
-
-                primary={product.name}
-
-                secondary={`${product.total_sold} Sold`}
-
-              />
-
-            </ListItem>
-
-            {
-
-              index !== topSellingProducts.length - 1 &&
-
-              <Divider />
-
-            }
-
+                      {index !== recentOrders.length - 1 && <Divider />}
+                    </Box>
+                  ))
+                )}
+              </List>
+            </Paper>
           </Box>
+        </Grid>
 
-        ))
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Box sx={{ mt: 4 }}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h5" fontWeight="bold" mb={2}>
+                ⚠ Low Stock Products
+              </Typography>
 
-      )
+              <List>
+                {lowStockProducts.length === 0 ? (
+                  <Typography>No Low Stock Products</Typography>
+                ) : (
+                  lowStockProducts.map((product, index) => (
+                    <Box key={product.id}>
+                      <ListItem>
+                        <ListItemText
+                          primary={product.name}
+                          secondary={`Stock : ${product.stock}`}
+                        />
+                      </ListItem>
 
-    }
+                      {index !== lowStockProducts.length - 1 && <Divider />}
+                    </Box>
+                  ))
+                )}
+              </List>
+            </Paper>
+            <Paper sx={{ p: 3, mt: 3 }}>
+              <Typography variant="h5" fontWeight="bold" mb={2}>
+                🏆 Top Selling Products
+              </Typography>
 
-  </List>
+              <List>
+                {topSellingProducts.length === 0 ? (
+                  <Typography>No Sales Yet</Typography>
+                ) : (
+                  topSellingProducts.map((product, index) => (
+                    <Box key={product.id}>
+                      <ListItem>
+                        <ListItemText
+                          primary={product.name}
+                          secondary={`${product.total_sold} Sold`}
+                        />
+                      </ListItem>
 
-</Paper>
-
-      </Box>
-
-
-</Grid>
-
-</Grid>
-
+                      {index !== topSellingProducts.length - 1 && <Divider />}
+                    </Box>
+                  ))
+                )}
+              </List>
+            </Paper>
+          </Box>
+        </Grid>
+      </Grid>
     </Box>
   );
 }

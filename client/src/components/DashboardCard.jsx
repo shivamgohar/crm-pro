@@ -1,20 +1,33 @@
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Chip,
+} from "@mui/material";
 
-function DashboardCard({ title, value, icon }) {
+function DashboardCard({
+  title,
+  value,
+  icon,
+  color = "primary.main",
+  change = "+0%",
+}) {
   return (
     <Card
-      elevation={3}
+      elevation={0}
       sx={{
-        borderRadius: 4,
-        height: 200,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        transition: "0.3s",
+        height: 180,
+        borderRadius: 2,
+        
+        border: "1px solid",
+        borderColor: "divider",
+        transition: "all .25s ease",
 
         "&:hover": {
-          transform: "translateY(-6px)",
-          boxShadow: 8,
+          transform: "translateY(-5px)",
+          boxShadow: 6,
+          borderColor: color,
         },
       }}
     >
@@ -23,45 +36,69 @@ function DashboardCard({ title, value, icon }) {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
         }}
       >
+        {/* Top */}
+
         <Box
           sx={{
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            gap: 1,
           }}
         >
           <Box
             sx={{
+              width: 52,
+              height: 52,
+              borderRadius: 3,
+              bgcolor: `${color}15`,
               display: "flex",
-              alignItems: "center",
               justifyContent: "center",
-              width: 50,
-              height: 50,
-              borderRadius: "50%",
-              bgcolor: "#f4f7fe",
+              alignItems: "center",
             }}
           >
             {icon}
           </Box>
 
-          <Typography variant="h6" fontWeight={600}>
-            {title}
-          </Typography>
+          <Chip
+            label={change}
+            color="success"
+            size="small"
+          />
         </Box>
 
+        {/* Title */}
+
         <Typography
-          variant="h4"
-          fontWeight="bold"
-          color="primary"
-          align="center"
+          sx={{
+            mt: 2,
+            color: "text.secondary",
+            fontWeight: 500,
+          }}
+        >
+          {title}
+        </Typography>
+
+        {/* Value */}
+
+        <Typography
+          sx={{
+            mt: 1,
+            fontSize: 24,
+            fontWeight: 700,
+            color: color,
+          }}
         >
           {value}
         </Typography>
 
-        <Typography variant="body2" color="text.secondary" align="center">
+        <Box sx={{ flexGrow: 1 }} />
+
+        <Typography
+          variant="body2"
+          color="text.secondary"
+        >
           Updated Today
         </Typography>
       </CardContent>

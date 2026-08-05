@@ -1,10 +1,13 @@
-import "./App.css";
+// import "./App.css";
+import "./index.css";
 import { useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 // import Dashboard from "./pages/Dashboard";
 import AppRoutes from "./routes/AppRoutes";
+// import { AppNavbar, AppSidebar } from "./components/layout";
+
 
 function App() {
 
@@ -19,19 +22,27 @@ const isLoginPage = location.pathname === "/login";
     {
       !isLoginPage && <Navbar />
     }
-
-    <div className="main">
+<div
+  style={{
+    display: "flex",
+  }}
+>
 
       {
-        !isLoginPage && <Sidebar />
+        !isLoginPage && < Sidebar />
       }
 
-      <div
-        style={{
-          flex: 1,
-          padding: isLoginPage ? 0 : "20px",
-        }}
-      >
+    <div
+  style={{
+    flex: 1,
+    marginLeft: isLoginPage ? 0 : 0,
+    marginTop: isLoginPage ? 0 : 72,
+    padding: isLoginPage ? 0 : 16,
+    background: "#f8fafc",
+    minHeight: "100vh",
+    boxSizing: "border-box",
+  }}
+>
         <AppRoutes />
       </div>
 

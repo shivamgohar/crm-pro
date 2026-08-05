@@ -1,101 +1,102 @@
 import {
-  Card,
   CardContent,
   Typography,
   Divider,
   Chip,
-  Stack,
+ 
+  Box,
 } from "@mui/material";
 
-function CustomerStatusCard({
-  summary,
-}) {
+// import { AppCard } from "../ui";
+
+function InfoRow({ title, value }) {
   return (
-    <Card elevation={3}>
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        py: 1,
+      }}
+    >
+      <Typography
+        variant="body2"
+        color="text.secondary"
+      >
+        {title}
+      </Typography>
+
+      <Typography
+        variant="body2"
+        fontWeight={600}
+      >
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
+export default function CustomerStatusCard({ summary }) {
+  return (
+    <>
+
       <CardContent>
 
         <Typography
           variant="h6"
-          gutterBottom
+          fontWeight={700}
+          mb={2}
         >
           Customer Status
         </Typography>
 
-        <Divider sx={{ mb: 2 }} />
+        <Chip
+          label="Customer Active"
+          color="success"
+          size="small"
+          sx={{ mb: 2 }}
+        />
 
-        <Stack spacing={2}>
+        <Divider />
 
-          <Chip
-            label="Customer Active"
-            color="success"
-          />
+        <InfoRow
+          title="AMC"
+          value={
+            summary?.amcActive
+              ? "Active"
+              : "Expired"
+          }
+        />
 
-     <Chip
-label={
-summary?.amcActive
-? "AMC Active"
-: "AMC Expired"
-}
-color={
-summary?.amcActive
-? "success"
-: "error"
-}
-/>
+        <Divider />
 
-       <Chip
-label={
-summary?.pendingAmount > 0
-? "Payment Pending"
-: "Payment Clear"
-}
-color={
-summary?.pendingAmount > 0
-? "warning"
-: "success"
-}
-/>
+        <InfoRow
+          title="Pending"
+          value={`₹${summary?.pendingAmount ?? 0}`}
+        />
 
-        </Stack>
+        <Divider />
 
-        <Divider sx={{ my: 3 }} />
+        <InfoRow
+          title="Last Service"
+          value={
+            summary?.lastService || "--"
+          }
+        />
 
-        <Typography>
-          Pending Amount
-        </Typography>
+        <Divider />
 
-        <Typography variant="h5">
-        ₹{summary?.pendingAmount ?? 0}
-        </Typography>
-
-        <Divider sx={{ my: 2 }} />
-
-        <Typography>
-          Last Service
-        </Typography>
-
-        <Typography variant="subtitle1">
-         {summary?.lastService || "--"}
-        </Typography>
-
-        <Divider sx={{ my: 2 }} />
-
-        <Typography>
-          Next Service
-        </Typography>
-
-        <Typography variant="subtitle1">
-       {
-summary?.nextService
-  ? new Date(summary.nextService)
-      .toLocaleDateString("en-IN")
-  : "--"
-}
-        </Typography>
+        <InfoRow
+          title="Next Service"
+          value={
+            summary?.nextService
+              ? new Date(summary.nextService).toLocaleDateString("en-IN")
+              : "--"
+          }
+        />
 
       </CardContent>
-    </Card>
+
+    </>
   );
 }
-
-export default CustomerStatusCard;

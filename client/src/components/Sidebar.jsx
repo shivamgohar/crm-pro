@@ -1,107 +1,124 @@
 import { NavLink } from "react-router-dom";
-import "../styles/Sidebar.css";
 
-function Sidebar() {
+import {
+  Drawer,
+  Toolbar,
+  Box,
+  Typography,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Avatar,
+} from "@mui/material";
+
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
+import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
+import WarehouseOutlinedIcon from "@mui/icons-material/WarehouseOutlined";
+import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
+import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+
+const menus = [
+  { text: "Dashboard", icon: <DashboardOutlinedIcon />, path: "/" },
+  { text: "Customers", icon: <PeopleAltOutlinedIcon />, path: "/customers" },
+  { text: "Products", icon: <Inventory2OutlinedIcon />, path: "/products" },
+  { text: "Orders", icon: <ShoppingCartOutlinedIcon />, path: "/orders" },
+  { text: "Reports", icon: <AssessmentOutlinedIcon />, path: "/reports" },
+  { text: "Inventory", icon: <WarehouseOutlinedIcon />, path: "/inventory" },
+  { text: "Invoice", icon: <ReceiptLongOutlinedIcon />, path: "/invoice" },
+  { text: "Payments", icon: <PaymentsOutlinedIcon />, path: "/payments" },
+  { text: "Settings", icon: <SettingsOutlinedIcon />, path: "/settings" },
+];
+
+export default function Sidebar() {
   return (
-    <aside className="sidebar">
+    <Drawer
+      variant="permanent"
+      sx={{
+        width: 250,
+        flexShrink: 0,
 
-      <div className="logo">
-        <h2>ACN GROUP</h2>
-        <p>CRM Software</p>
-      </div>
+        "& .MuiDrawer-paper": {
+          width: 250,
+          boxSizing: "border-box",
+          borderRight: 1,
+          borderColor: "divider",
+        },
+      }}
+    >
+      <Toolbar />
 
-      <nav className="menu">
-
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            isActive ? "menu-item active" : "menu-item"
-          }
+      <Box
+        sx={{
+          px: 3,
+          py: 2,
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
+        <Avatar
+          sx={{
+            bgcolor: "primary.main",
+          }}
         >
-          🏠 Dashboard
-        </NavLink>
+          C
+        </Avatar>
 
-        <NavLink
-          to="/customers"
-          className={({ isActive }) =>
-            isActive ? "menu-item active" : "menu-item"
-          }
-        >
-          👥 Customers
-        </NavLink>
+        <Box>
+          <Typography fontWeight={700}>
+            CRM PRO
+          </Typography>
 
-        <NavLink
-          to="/products"
-          className={({ isActive }) =>
-            isActive ? "menu-item active" : "menu-item"
-          }
-        >
-          📦 Products
-        </NavLink>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+          >
+            ACN GROUP
+          </Typography>
+        </Box>
+      </Box>
 
-        <NavLink
-          to="/orders"
-          className={({ isActive }) =>
-            isActive ? "menu-item active" : "menu-item"
-          }
-        >
-          🛒 Orders
-        </NavLink>
+      <List sx={{ px: 1 }}>
 
-        <NavLink
-  to="/reports"
-  className={({ isActive }) =>
-    isActive ? "menu-item active" : "menu-item"
-  }
->
-  📊 Reports
-</NavLink>
+        {menus.map((item) => (
 
+          <ListItemButton
+            key={item.path}
+            component={NavLink}
+            to={item.path}
+            sx={{
+              borderRadius: 2,
+              mb: .5,
 
-<NavLink
-  to="/inventory"
-  className={({ isActive }) =>
-    isActive ? "menu-item active" : "menu-item"
-  }
->
-  📦 Inventory
-</NavLink>
+              "&.active": {
+                bgcolor: "primary.main",
+                color: "#fff",
 
-<NavLink
-  to="/invoice"
-  className={({ isActive }) =>
-    isActive ? "menu-item active" : "menu-item"
-  }
->
-  🧾 Invoice
-</NavLink>
+                "& .MuiListItemIcon-root": {
+                  color: "#fff",
+                },
+              },
+            }}
+          >
+            <ListItemIcon>
 
-<NavLink
-  to="/payments"
-  className={({ isActive }) =>
-    isActive ? "menu-item active" : "menu-item"
-  }
->
-   💳 Payments
-</NavLink>
+              {item.icon}
 
+            </ListItemIcon>
 
+            <ListItemText primary={item.text} />
 
-<NavLink
-  to="/settings"
-  className={({ isActive }) =>
-    isActive ? "menu-item active" : "menu-item"
-  }
->
-  ⚙ Settings
-</NavLink>
-  
+          </ListItemButton>
 
-      </nav>
+        ))}
 
-    </aside>
+      </List>
+
+    </Drawer>
   );
 }
-
-export default Sidebar;

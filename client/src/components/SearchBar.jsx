@@ -10,7 +10,7 @@ export default function SearchBar({ value, onChange, placeholder }) {
       value={value}
       onChange={onChange}
       sx={{
-        mb: 3,
+        // mb: 3,
 
         "& .MuiOutlinedInput-root": {
           borderRadius: 3,

@@ -11,6 +11,7 @@ import CustomerDialog from "../components/customer/CustomerDialog";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+// import { AppPage } from "../components/ui";
 
 import {
   getProfileCustomerFields,
@@ -23,7 +24,7 @@ import {
   Typography,
   Button,
   Grid,
-  Stack,
+ 
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -129,37 +130,68 @@ useEffect(() => {
     return <h2>Loading...</h2>;
   }
   return (
-    <Box sx={{ p: 3, bgcolor: "#f5f7fb", minHeight: "100vh" }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 3 }}
-      >
-        <Button
-          startIcon={<ArrowBackIcon />}
-          variant="outlined"
-          onClick={() => navigate("/customers")}
-        >
-          Customers
-        </Button>
-      </Stack>
+ <>
 
-    <QuickActionBar
-  onAddService={handleOpenServiceDialog}
-  onEditCustomer={handleEditCustomer}
-/>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
-          {/* <CustomerSummaryCard customer={customer} /> */}
+<Box
+  sx={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    mb: 3,
+    flexWrap: "wrap",
+    gap: 2,
+  }}
+>
+
+  <Box>
+
+    <Button
+      startIcon={<ArrowBackIcon />}
+      variant="text"
+      sx={{ mb: 1 }}
+      onClick={() => navigate("/customers")}
+    >
+      Customers
+    </Button>
+
+    <Typography
+      variant="h4"
+      fontWeight={700}
+    >
+      {customer.name}
+    </Typography>
+
+    <Typography
+      color="text.secondary"
+      variant="body2"
+    >
+      Customer ID : {customer.customer_code}
+    </Typography>
+
+  </Box>
+
+  <QuickActionBar
+    onAddService={handleOpenServiceDialog}
+    onEditCustomer={handleEditCustomer}
+  />
+
+</Box>
+
+     <Grid
+  container
+  spacing={2}
+  alignItems="stretch"
+>
+<Grid size={{ xs: 12, lg: 8 }}>
+          
           <CustomerSummaryCard
     customer={customer}
     fields={profileFields}
 />
         </Grid>
 
-        <Grid item xs={12} md={4}>
+     <Grid size={{ xs: 12, lg: 4 }}>
          <CustomerStatusCard
   summary={summary}
 />
@@ -241,7 +273,7 @@ useEffect(() => {
     setOpenCustomerDialog(false);
   }}
 />
-    </Box>
+   </>
   );
 }
 

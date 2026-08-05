@@ -1,113 +1,108 @@
 import {
-  Card,
-  CardContent,
+  Paper,
+  Box,
   Typography,
   Grid,
   Divider,
-  Chip,
+  
 } from "@mui/material";
 
+// import { AppCard } from "../ui";
+
 function CustomerSummaryCard({ customer ,fields,}) {
-  return (
-    <Card elevation={3}>
-      <CardContent>
+return (
+  <Paper
+    elevation={0}
+    sx={{
+      p: 3,
+      borderRadius: 3,
+      border: "1px solid",
+      borderColor: "divider",
+      bgcolor: "background.paper",
+    }}
+  >
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        flexWrap: "wrap",
+        gap: 2,
+        mb: 3,
+      }}
+    >
+      <Box>
+
+       
 
         <Typography
-          variant="h4"
-          gutterBottom
+          variant="body2"
+          color="text.secondary"
+          sx={{ mt: .5 }}
         >
-          {customer.name}
+        Contact no. : {customer.phone}
+        </Typography>
+          <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mt: .5 }}
+        >
+        Address : {customer.address}
         </Typography>
 
-        <Chip
-          label="Active Customer"
-          color="success"
-          sx={{ mb: 3 }}
-        />
+      </Box>
 
-        <Divider sx={{ mb: 3 }} />
+   
 
-        {/* <Grid container spacing={3}>
+    </Box>
 
-          <Grid item xs={6}>
+    <Divider sx={{ mb: 3 }} />
 
-            <Typography color="text.secondary">
-              Customer Code
-            </Typography>
-
-            <Typography variant="h6">
-              {customer.customer_code}
-            </Typography>
-
-          </Grid>
-
-          <Grid item xs={6}>
-
-            <Typography color="text.secondary">
-              Mobile
-            </Typography>
-
-            <Typography variant="h6">
-              {customer.phone}
-            </Typography>
-
-          </Grid>
-
-          <Grid item xs={6}>
-
-            <Typography color="text.secondary">
-              Email
-            </Typography>
-
-            <Typography variant="h6">
-              {customer.email || "-"}
-            </Typography>
-
-          </Grid>
-
-          <Grid item xs={12}>
-
-            <Typography color="text.secondary">
-              Current Address
-            </Typography>
-
-            <Typography variant="h6">
-              {customer.address}
-            </Typography>
-
-          </Grid>
-
-        </Grid> */}
-
-
-        <Grid container spacing={3}>
-  {fields.map((field) => (
     <Grid
-      item
-      xs={12}
-      md={6}
-      key={field.id}
+      container
+      spacing={3}
     >
-      <Typography color="text.secondary">
-        {field.field_label}
-      </Typography>
 
-      <Typography variant="h6">
-        {
-          customer[
-            field.field_key === "customer_name"
-              ? "name"
-              : field.field_key
-          ] || "-"
-        }
-      </Typography>
+      {fields.map((field) => (
+
+        <Grid
+          size={{ xs: 12, sm: 6 }}
+          key={field.id}
+        >
+
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              textTransform: "uppercase",
+              letterSpacing: 1,
+            }}
+          >
+            {field.field_label}
+          </Typography>
+
+          <Typography
+            variant="body1"
+            fontWeight={600}
+            sx={{ mt: .5 }}
+          >
+            {
+              customer[
+                field.field_key === "customer_name"
+                  ? "name"
+                  : field.field_key
+              ] || "-"
+            }
+          </Typography>
+
+        </Grid>
+
+      ))}
+
     </Grid>
-  ))}
-</Grid>
 
-      </CardContent>
-    </Card>
-  );
+  </Paper>
+);
 }
 
 export default CustomerSummaryCard;

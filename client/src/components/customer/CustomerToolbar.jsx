@@ -1,5 +1,11 @@
-import { Box, MenuItem, TextField } from "@mui/material";
-import SearchBar from "../SearchBar";
+import { Box,  } from "@mui/material";
+// import SearchBar from "../SearchBar";
+// import AppToolbar from "../ui/AppToolbar";
+import {
+  AppToolbar,
+  AppSearch,
+  AppSelect,
+} from "../ui";
 
 export default function CustomerToolbar({
   search,
@@ -18,69 +24,67 @@ export default function CustomerToolbar({
   setSort,
 }) {
   return (
+  <AppToolbar>
+<Box
+ sx={{
+      flex: 1,
+      mr: 2,
+    }}
+>
+    <AppSearch
+      value={search}
+      onChange={onSearch} 
+      placeholder="Search customer..."
+    />
+</Box>
 
+<Box   sx={{
+      display: "flex",
+      alignItems: "center",
+      gap: 1,
+      flexShrink: 0,
+    }} >
+    <AppSelect
+      value={searchBy}
+      onChange={(e) => setSearchBy(e.target.value)}
+      items={[
+        { value: "all", label: "All" },
+        { value: "name", label: "Name" },
+        { value: "customer_code", label: "Customer Code" },
+        { value: "phone", label: "Phone" },
+        { value: "address", label: "Address" },
+      ]}
+    />
 
-    
+    <AppSelect
+      value={status}
+      onChange={(e) => setStatus(e.target.value)}
+      items={[
+        { value: "all", label: "All Status" },
+        { value: "active", label: "Active" },
+      ]}
+    />
 
-    <Box
-      sx={{
-        display: "flex",
-        gap: 2,
-        mb: 3,
-        flexWrap: "wrap",
-        alignItems: "center",
-      }}
-    >
-      <Box sx={{ flex: 1, minWidth: 300 }}>
-        <SearchBar
-          value={search}
-          onChange={onSearch}
-          placeholder="Search customer..."
-        />
-      </Box>
+    <AppSelect
+      value={area}
+      onChange={(e) => setArea(e.target.value)}
+      items={[
+        { value: "all", label: "All Area" },
+      ]}
+    />
 
-      <TextField
-        select
-        size="small"
-        value={searchBy}
-        onChange={(e) => setSearchBy(e.target.value)}
-      >
-        <MenuItem value="all">All</MenuItem>
-        <MenuItem value="name">Name</MenuItem>
-        <MenuItem value="customer_code">Customer Code</MenuItem>
-        <MenuItem value="phone">Phone</MenuItem>
-        <MenuItem value="address">Address</MenuItem>
-      </TextField>
+    <AppSelect
+      value={sort}
+      onChange={(e) => setSort(e.target.value)}
+      items={[
+        { value: "name", label: "A-Z" },
+        { value: "latest", label: "Newest" },
+        { value: "oldest", label: "Oldest" },
+      ]}
+    />
 
-      <TextField
-        select
-        size="small"
-        value={status}
-        onChange={(e) => setStatus(e.target.value)}
-      >
-        <MenuItem value="all">All Status</MenuItem>
-        <MenuItem value="active">Active</MenuItem>
-      </TextField>
-
-      <TextField
-        select
-        size="small"
-        value={area}
-        onChange={(e) => setArea(e.target.value)}
-      >
-        <MenuItem value="all">All Area</MenuItem>
-      </TextField>
-
-      <TextField
-        select
-        size="small"
-        value={sort}
-        onChange={(e) => setSort(e.target.value)}
-      >
-        <MenuItem value="name">A-Z</MenuItem>
-        <MenuItem value="latest">Newest</MenuItem>
-        <MenuItem value="oldest">Oldest</MenuItem>
-      </TextField>
     </Box>
-  );
+
+  </AppToolbar>
+);
 }
