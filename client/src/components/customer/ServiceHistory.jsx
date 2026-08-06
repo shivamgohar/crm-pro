@@ -154,7 +154,7 @@ sortedServices.sort((a, b) => {
 
 const RESERVED_COLUMNS = [
 
-  "Status",
+ 
   "Action",
 ];
 

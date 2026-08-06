@@ -8,9 +8,10 @@ import RestoreIcon from "@mui/icons-material/Restore";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { useNavigate } from "react-router-dom";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+// import { useNavigate } from "react-router-dom";
+// import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { AppButton } from "../../components/ui";
+import AppBreadcrumb from "../../components/ui/AppBreadcrumb";
 
 import {
   Box,  
@@ -48,7 +49,7 @@ function CustomerFields() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedField, setSelectedField] = useState(null);
 const [dialogMode, setDialogMode] = useState("add");
-const navigate = useNavigate();
+// const navigate = useNavigate();
 
 
 const handleEdit = (field) => {
@@ -126,16 +127,22 @@ const handleDragEnd = async (result) => {
         mb={3}
       >
 
-
+<AppBreadcrumb
+  items={[
+    {
+      label: "Settings",
+      path: "/settings",
+    },
+    {
+      label: "Customer Fields",
+    },
+  ]}
+/>
 
         <Typography variant="h4">Customer Fields</Typography>
-           <AppButton
-          startIcon={<ArrowBackIcon />}
-          variant="outlined"
-          onClick={() => navigate("/settings")}
-        >
-          Back
-        </AppButton>
+
+        
+       
 
        <AppButton
     variant="contained"

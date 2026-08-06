@@ -15,9 +15,9 @@ import CustomerFields from "../pages/settings/CustomerFields";
 import Settings from "../pages/settings/Settings";
 import CustomerStatus from "../pages/settings/CustomerStatus";
 import ImportWizard from "../modules/import/pages/ImportWizard";
+import DataManagement from "../pages/settings/DataManagement";
 
 // import ImportWizard from "../modules/shared/import/pages/ImportWizard";
-
 
 function AppRoutes() {
   return (
@@ -117,20 +117,32 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/customers/import"
+        element={
+          <ProtectedRoute>
+            <ImportWizard />
+          </ProtectedRoute>
+        }
+      />
 
-
-<Route
-  path="/customers/import"
-  element={
-    <ProtectedRoute>
-      <ImportWizard />
-    </ProtectedRoute>
-  }
-/>
-
-      <Route path="/settings/customer-status" element={ <ProtectedRoute>
+      <Route
+        path="/settings/customer-status"
+        element={
+          <ProtectedRoute>
             <CustomerStatus />
-          </ProtectedRoute>} />
+          </ProtectedRoute>
+        }
+      />
+
+        <Route
+        path="/settings/data-management"
+        element={
+          <ProtectedRoute>
+            <DataManagement />
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="/login" element={<Login />} />
     </Routes>

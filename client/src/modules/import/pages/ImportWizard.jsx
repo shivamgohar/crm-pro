@@ -9,7 +9,7 @@ import { useSnackbar } from "notistack";
 import { cleanColumns } from "../utils/cleanColumns";
 import ImportStep from "../components/ImportStep";
 import { useNavigate } from "react-router-dom";
-
+import AppBreadcrumb from "../../../components/ui/AppBreadcrumb";
 import { readExcelFile, getSheetData } from "../services/excelService";
 
 import {
@@ -191,6 +191,21 @@ const handleFinish = () => {
 
   return (
     <Paper sx={{ p: 3 }}>
+      <AppBreadcrumb
+        items={[
+          {
+            label: "Settings",
+            path: "/settings",
+          },
+          {
+            label: "Data Management",
+            path: "/settings/data-management",
+          },
+          {
+            label: "Customer Import",
+          },
+        ]}
+      />
       <Typography variant="h5" mb={3}>
         Customer Import
       </Typography>

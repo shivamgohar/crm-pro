@@ -5,16 +5,15 @@ import {
   CardActionArea,
   CardContent,
   Grid,
- 
+  Chip,
 } from "@mui/material";
 
 import {
   Business,
   People,
-  TableChart,
+  Storage,
   ManageAccounts,
   Security,
-  Backup,
   Palette,
 } from "@mui/icons-material";
 
@@ -38,19 +37,19 @@ function Settings() {
       path: "/settings/customer-fields",
       disabled: false,
     },
-       {
+    {
       title: "Customer Status",
-      description: "Manage customer Status",
+      description: "Manage customer status",
       icon: <People fontSize="large" />,
-      path: "/settings/customer-Status",
+      path: "/settings/customer-status",
       disabled: false,
     },
     {
-      title: "Excel Mapping",
-      description: "Configure Excel import",
-      icon: <TableChart fontSize="large" />,
-      path: "/settings/excel-mapping",
-      disabled: true,
+      title: "Data Management",
+      description: "Import, export, backup and restore data",
+      icon: <Storage fontSize="large" />,
+      path: "/settings/data-management",
+      disabled: false,
     },
     {
       title: "Users",
@@ -64,13 +63,6 @@ function Settings() {
       description: "Manage access control",
       icon: <Security fontSize="large" />,
       path: "/settings/roles",
-      disabled: true,
-    },
-    {
-      title: "Backup",
-      description: "Backup & Restore",
-      icon: <Backup fontSize="large" />,
-      path: "/settings/backup",
       disabled: true,
     },
     {
@@ -91,21 +83,25 @@ function Settings() {
       <Grid container spacing={3}>
         {settings.map((item) => (
           <Grid item xs={12} sm={6} md={4} key={item.title}>
-            <Card>
+            <Card sx={{ height: "100%" }}>
               <CardActionArea
+                sx={{ height: "100%" }}
                 disabled={item.disabled}
-                onClick={() => {
-                  navigate(item.path);
-                }}
+                onClick={() => navigate(item.path)}
               >
                 <CardContent>
                   <Box mb={2}>{item.icon}</Box>
 
-                  <Typography variant="h6">{item.title}</Typography>
+                  <Typography variant="h6" gutterBottom>
+                    {item.title}
+                  </Typography>
 
                   <Typography variant="body2" color="text.secondary">
                     {item.description}
                   </Typography>
+                  {item.disabled && (
+                    <Chip label="Coming Soon" size="small" sx={{ mt: 2 }} />
+                  )}
                 </CardContent>
               </CardActionArea>
             </Card>

@@ -9,10 +9,11 @@ import RestoreIcon from "@mui/icons-material/Restore";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { useNavigate } from "react-router-dom";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+// import { useNavigate } from "react-router-dom";
+// import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useSnackbar } from "notistack";
 import DeleteIcon from "@mui/icons-material/Delete";
+import AppBreadcrumb from "../../components/ui/AppBreadcrumb";
 
 import {
   Box,
@@ -43,7 +44,7 @@ function CustomerStatus() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [dialogMode, setDialogMode] = useState("add");
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState(null);
@@ -175,14 +176,22 @@ function CustomerStatus() {
         alignItems="center"
         mb={3}
       >
+
+<AppBreadcrumb
+  items={[
+    {
+      label: "Settings",
+      path: "/settings",
+    },
+    {
+      label: "Customer Status",
+    },
+  ]}
+/>
+
+
         <Typography variant="h4">Customer Status</Typography>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          variant="outlined"
-          onClick={() => navigate("/settings")}
-        >
-          Back
-        </Button>
+    
         <Button variant="contained" onClick={handleAdd}>
           + Add Status
         </Button>
