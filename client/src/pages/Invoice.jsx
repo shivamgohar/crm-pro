@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";
+import api from "../api/api";
 import { Divider } from "@mui/material";
 
 import {
@@ -26,7 +27,7 @@ function Invoice() {
 
   const fetchInvoices = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/invoice");
+      const response = await api.get("/invoice");
 
       setInvoices(response.data.invoices);
     } catch (error) {

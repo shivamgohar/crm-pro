@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";
+import api from "../api/api";
 
 import {
   Paper,
@@ -37,7 +38,7 @@ export default function Payments() {
 
   const fetchPayments = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/payments");
+      const res = await api.get("/payments");
 
       setPayments(res.data);
     } catch (error) {
@@ -47,7 +48,7 @@ export default function Payments() {
 
   const savePayment = async () => {
     try {
-      await axios.post("http://localhost:5000/payments", formData);
+      await api.post("/payments", formData);
 
       fetchPayments();
 

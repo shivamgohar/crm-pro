@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";
+import api from "../api/api";
 import DashboardCard from "../components/DashboardCard";
 import PeopleIcon from "@mui/icons-material/People";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
@@ -31,7 +32,7 @@ function Dashboard() {
 
   const fetchDashboard = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/dashboard");
+      const response = await api.get("/dashboard");
 
       setStats(response.data);
       setRecentOrders(response.data.recentOrders);
@@ -53,7 +54,7 @@ function Dashboard() {
       </Typography>
 
       <Typography color="text.secondary" sx={{ mb: 4 }}>
-        Welcome back, Steve 👋
+        Welcome to your dashboard! Here you can get a quick overview of your
       </Typography>
 
       <Grid container spacing={3}>

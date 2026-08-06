@@ -26,15 +26,16 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import { useState  } from "react";
 
-const ServiceHistory = ({ services,onEditService }) => {
+const ServiceHistory = ({ services,serviceFields,onEditService }) => {
   const [search, setSearch] = useState("");
   const [recordType, setRecordType] = useState("ALL");
   const [engineerFilter, setEngineerFilter] = useState("ALL");
   const [serviceFilter, setServiceFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("NEWEST");
   // const [searchText, setSearchText] = useState("");
-
-  console.log("Services received:", services);
+  
+// console.log("SERVICE FIELDS =", serviceFields);
+//   console.log("Services received:", services);
 
   // const services = [
   //   {
@@ -57,7 +58,7 @@ const ServiceHistory = ({ services,onEditService }) => {
   //   },
   // ];
 
-  console.log("ServiceHistory props:", services);
+  // console.log("ServiceHistory props:", services);
 
 const keyword = search.trim().toLowerCase();
 
@@ -151,7 +152,15 @@ sortedServices.sort((a, b) => {
 });
 
 
+const RESERVED_COLUMNS = [
 
+  "Status",
+  "Action",
+];
+
+const dynamicColumns = [...serviceFields].sort(
+  (a, b) => a.display_order - b.display_order
+);
   return (
     <Box>
       {/* Header */}
@@ -285,12 +294,17 @@ sortedServices.sort((a, b) => {
         elevation={0}
         sx={{ mt: 2, overflowX: "auto" }}
       >
+
+ 
         <Table
           stickyHeader
           sx={{
             minWidth: 1100,
           }}
         >
+
+          
+{/*           
           <TableHead>
             <TableRow >
               <TableCell>Date</TableCell>
@@ -302,7 +316,23 @@ sortedServices.sort((a, b) => {
               <TableCell>Status</TableCell>
               <TableCell align="center">Action</TableCell>
             </TableRow>
-          </TableHead>
+          </TableHead> */}
+
+          <TableHead>
+  <TableRow>
+    {dynamicColumns.map((field) => (
+      <TableCell key={field.field_key}>
+        {field.field_label}
+      </TableCell>
+    ))}
+
+    {RESERVED_COLUMNS.map((column) => (
+      <TableCell key={column}>
+        {column}
+      </TableCell>
+    ))}
+  </TableRow>
+</TableHead>
 
           <TableBody>
             

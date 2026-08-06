@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";
+import api from "../api/api";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Autocomplete from "@mui/material/Autocomplete";
 import { useSnackbar } from "notistack";
@@ -51,13 +52,13 @@ function Orders() {
   const [deleteId, setDeleteId] = useState(null);
 
   const fetchCustomers = async () => {
-    const response = await axios.get("http://localhost:5000/customers");
+    const response = await api.get("/customers");
 
     setCustomers(response.data.customers);
   };
 
   const fetchProducts = async () => {
-    const response = await axios.get("http://localhost:5000/products");
+    const response = await api.get("/products");
 
     setProducts(response.data.products);
   };
@@ -68,7 +69,7 @@ function Orders() {
 
   const fetchOrders = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/orders");
+      const response = await api.get("/orders");
 
       setOrders(response.data.orders);
     } catch (error) {
@@ -78,7 +79,7 @@ function Orders() {
 
   const createOrder = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/orders", {
+      const response = await api.post("/orders", {
         customer_id: customerId,
         product_id: productId,
         quantity,
@@ -107,8 +108,8 @@ function Orders() {
 
   try {
 
-    await axios.delete(
-      `http://localhost:5000/orders/${deleteId}`
+    await api.delete(
+      `/orders/${deleteId}`
     );
 
     enqueueSnackbar(

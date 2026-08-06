@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";
+import api from "../api/api";
 
 import {
   Box,
@@ -32,7 +33,7 @@ function Inventory() {
 
   const fetchInventory = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/inventory");
+      const response = await api.get("/inventory");
 
       setProducts(response.data.products);
     } catch (error) {
@@ -42,8 +43,8 @@ function Inventory() {
 
   //   const updateStock = async () => {
   //     try {
-  //       await axios.put(
-  //         `http://localhost:5000/inventory/${selectedProduct.id}`,
+  //       await api.put(
+  //         `/api/inventory/${selectedProduct.id}`,
 
   //         {
   //           stock: Number(newStock),
@@ -64,8 +65,8 @@ function Inventory() {
 
   const addStock = async () => {
     try {
-      await axios.put(
-        `http://localhost:5000/inventory/add/${selectedProduct.id}`,
+      await api.put(
+        `/inventory/add/${selectedProduct.id}`,
 
         {
           quantity: Number(quantity),
@@ -86,8 +87,8 @@ function Inventory() {
 
   const removeStock = async () => {
     try {
-      await axios.put(
-        `http://localhost:5000/inventory/remove/${selectedProduct.id}`,
+      await api.put(
+        `/inventory/remove/${selectedProduct.id}`,
 
         {
           quantity: Number(quantity),

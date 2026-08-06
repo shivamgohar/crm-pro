@@ -10,6 +10,34 @@ import {
 // import { AppCard } from "../ui";
 
 function CustomerSummaryCard({ customer ,fields,}) {
+
+const getFieldValue = (field) => {
+
+  switch (field.field_key) {
+
+    case "customer_name":
+      return customer.name;
+
+    case "customer_code":
+      return customer.customer_code;
+
+    case "location":
+      return customer.address;
+
+    default:
+      return customer[field.field_key] || "-";
+
+  }
+
+};
+
+// const PROFILE_EXCLUDED_FIELDS = [
+//   "customer_name",
+//   "customer_code",
+// ];
+
+
+
 return (
   <Paper
     elevation={0}
@@ -35,20 +63,13 @@ return (
 
        
 
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mt: .5 }}
-        >
-        Contact no. : {customer.phone}
-        </Typography>
-          <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mt: .5 }}
-        >
-        Address : {customer.address}
-        </Typography>
+<Typography
+  variant="h6"
+  fontWeight={600}
+>
+  Customer Information
+</Typography>
+
 
       </Box>
 
@@ -63,7 +84,16 @@ return (
       spacing={3}
     >
 
-      {fields.map((field) => (
+      {fields
+  .filter((field) => {
+      return (
+          field.show_in?.profile &&
+          // !PROFILE_EXCLUDED_FIELDS.includes(field.field_key)
+          field.field_key !== "customer_name" &&
+          field.field_key !== "customer_code"
+      );
+  })
+  .map((field) => (
 
         <Grid
           size={{ xs: 12, sm: 6 }}
@@ -87,11 +117,7 @@ return (
             sx={{ mt: .5 }}
           >
             {
-              customer[
-                field.field_key === "customer_name"
-                  ? "name"
-                  : field.field_key
-              ] || "-"
+getFieldValue(field)
             }
           </Typography>
 

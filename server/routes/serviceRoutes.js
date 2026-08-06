@@ -13,7 +13,7 @@ const {
 router.get("/customer-code/:customerCode", async (req, res) => {
   try {
     const { customerCode } = req.params;
-     console.log("Customer Code:", customerCode);
+    //  console.log("Customer Code:", customerCode);
 
     const result = await db.query(
       `

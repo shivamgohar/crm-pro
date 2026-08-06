@@ -87,7 +87,7 @@ customerFields.forEach((field) => {
   const loadFields = async () => {
     try {
       const data = await getDialogCustomerFields();
-      console.log(data);
+      // console.log(data);
       setFields(data);
     } catch (error) {
       console.error(error);

@@ -42,6 +42,7 @@ function CustomerProfile() {
   const [profileFields, setProfileFields] = useState([]);
   const [summary, setSummary] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
+  const [serviceFields, setServiceFields] = useState([]);
  
 
   const fetchCustomer = async () => {
@@ -102,19 +103,37 @@ const handleEditService = (service) => {
 };
 
 
-const loadProfileFields = async () => {
+// const loadProfileFields = async () => {
+//   try {
+//     const data = await getProfileCustomerFields();
+//     setProfileFields(data);
+//   } catch (error) {
+//     console.error(error);
+//   }
+// };
+
+
+const loadFields = async () => {
   try {
     const data = await getProfileCustomerFields();
-    setProfileFields(data);
+
+    setProfileFields(
+      data.filter((field) => field.field_group === "customer")
+    );
+
+    setServiceFields(
+      data.filter((field) => field.field_group === "service")
+    );
+
   } catch (error) {
     console.error(error);
   }
 };
 
-
 useEffect(() => {
   fetchCustomer();
-  loadProfileFields();
+  // loadProfileFields();
+  loadFields();
 }, [id]);
 
 
@@ -202,6 +221,8 @@ useEffect(() => {
        <ServiceHistory
   services={services}
   onEditService={handleEditService}
+  serviceFields={serviceFields}
+
 />
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>

@@ -241,7 +241,7 @@ const getCustomerSummary = async (req, res) => {
 
     const { customerCode } = req.params;
 
-    console.log("Customer Code:", customerCode);
+    // console.log("Customer Code:", customerCode);
 
     const result = await db.query(
       `
@@ -255,7 +255,7 @@ const getCustomerSummary = async (req, res) => {
       [customerCode]
     );
 
-    console.log(result.rows);
+    // console.log(result.rows);
 
     const data = result.rows[0];
 

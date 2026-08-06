@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";
+import api from "../api/api";
 
 import {
   Box,
@@ -49,7 +50,7 @@ function Products() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/products");
+      const response = await api.get("/products");
 
       setProducts(response.data.products);
     } catch (error) {
@@ -60,7 +61,7 @@ function Products() {
   const addProduct = async () => {
     if (!validateProduct()) return;
     try {
-      await axios.post("http://localhost:5000/products", {
+      await api.post("/products", {
         name,
         category,
         price,
@@ -86,7 +87,7 @@ function Products() {
   const updateProduct = async () => {
     if (!validateProduct()) return;
     try {
-      await axios.put(`http://localhost:5000/products/${editingId}`, {
+      await api.put(`/products/${editingId}`, {
         name,
         category,
         price,
@@ -114,8 +115,8 @@ function Products() {
 const deleteProduct = async (id) => {
   try {
 
-    await axios.delete(
-      `http://localhost:5000/products/${id}`
+    await api.delete(
+      `/products/${id}`
     );
 
     fetchProducts();

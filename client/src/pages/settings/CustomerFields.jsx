@@ -68,7 +68,7 @@ const handleAdd = () => {
     try {
       const data = await getAllCustomerFields();
 
-      console.log("API Data:", data);
+      // console.log("API Data:", data);
 
       setFields(data);
     } catch (error) {
@@ -114,7 +114,7 @@ const handleDragEnd = async (result) => {
   }, []);
 
   useEffect(() => {
-    console.log("Fields State Changed:", fields);
+    // console.log("Fields State Changed:", fields);
   }, [fields]);
 
   return (

@@ -13,6 +13,7 @@ const {
       getImportCustomerFields,
       getDialogCustomerFields,
       getListCustomerFields,
+      getProfileCustomerFields,
 } = require("../controllers/companyFieldController");
 
 router.get("/all", getAllCustomerFields);
@@ -23,6 +24,8 @@ router.get(
     "/dialog",
     getDialogCustomerFields
 );
+
+router.get("/profile", getProfileCustomerFields);
 
 router.get("/", getCustomerFields);
 

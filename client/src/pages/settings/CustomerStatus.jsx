@@ -39,7 +39,6 @@ import {
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 function CustomerStatus() {
-
   const [statuses, setStatuses] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(null);
@@ -90,7 +89,7 @@ function CustomerStatus() {
       //   const data = await getAllCustomerstatus();
       const data = await getCustomerStatuses();
 
-      console.log("API Data:", data);
+      // console.log("API Data:", data);
 
       // setstatus(data);
       setStatuses(data);
@@ -165,7 +164,7 @@ function CustomerStatus() {
   }, []);
 
   useEffect(() => {
-    console.log("Statuses State Changed:", statuses);
+    // console.log("Statuses State Changed:", statuses);
   }, [statuses]);
 
   return (
@@ -221,8 +220,6 @@ function CustomerStatus() {
                         <TableRow
                           key={status.id}
                           ref={provided.innerRef}
-                         
-
                           {...provided.draggableProps}
                         >
                           <TableCell width={50}>
@@ -238,19 +235,22 @@ function CustomerStatus() {
                           <TableCell>{status.display_order}</TableCell>
                           <TableCell>{status.status_name}</TableCell>
 
-                         
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Box
-                              sx={{
-                                width: 16,
-                                height: 16,
-                                borderRadius: "50%",
-                                backgroundColor: status.status_color,
-                                border: "1px solid #ccc",
-                              }}
-                            />
-                            {status.status_color}
-                          </Box>
+                          <TableCell>
+                            
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Box
+                                sx={{
+                                  width: 16,
+                                  height: 16,
+                                  borderRadius: "50%",
+                                  backgroundColor: status.status_color,
+                                  border: "1px solid #ccc",
+                                }}
+                              />
+                              {status.status_color}
+                            </Box>
+                          </TableCell>
+
                           <TableCell>
                             <Chip
                               label={status.is_default ? "Yes" : "No"}

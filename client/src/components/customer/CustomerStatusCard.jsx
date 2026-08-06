@@ -37,6 +37,13 @@ function InfoRow({ title, value }) {
 }
 
 export default function CustomerStatusCard({ summary }) {
+
+const formatDate = (date) => {
+  if (!date) return "--";
+
+  return new Date(date).toLocaleDateString("en-IN");
+};
+
   return (
     <>
 
@@ -79,20 +86,15 @@ export default function CustomerStatusCard({ summary }) {
 
         <InfoRow
           title="Last Service"
-          value={
-            summary?.lastService || "--"
-          }
+          value={formatDate(summary?.lastService)}
         />
 
         <Divider />
 
         <InfoRow
           title="Next Service"
-          value={
-            summary?.nextService
-              ? new Date(summary.nextService).toLocaleDateString("en-IN")
-              : "--"
-          }
+          value={formatDate(summary?.nextService)}
+          
         />
 
       </CardContent>

@@ -6,11 +6,11 @@ import {
   Avatar,
   Badge,
   TextField,
-  InputAdornment,
+  // InputAdornment,
   Button,
 } from "@mui/material";
 
-import SearchIcon from "@mui/icons-material/Search";
+// import SearchIcon from "@mui/icons-material/Search";
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
@@ -59,13 +59,14 @@ function Navbar() {
               width: 320,
               maxWidth: "30%",
             }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
+            // InputProps={{
+            //   startAdornment: (
+            //     <InputAdornment position="start">
+            //       <SearchIcon />
+            //     </InputAdornment>
+            //   ),
+            // }}
+          
           />
 
           {/* Right */}

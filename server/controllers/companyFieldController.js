@@ -440,6 +440,21 @@ const getListCustomerFields = async (req, res) => {
 };
 
 
+const getProfileCustomerFields = async (req, res) => {
+
+    const result = await pool.query(`
+        SELECT *
+        FROM company_customer_fields
+        WHERE
+            is_visible = true
+            AND show_in->>'profile' = 'true'
+        ORDER BY display_order
+    `);
+
+    res.json(result.rows);
+
+};
+
 module.exports = {
     getCustomerFields,
     addCustomerField,
@@ -451,4 +466,5 @@ module.exports = {
     getImportCustomerFields,
     getDialogCustomerFields,
     getListCustomerFields,
+    getProfileCustomerFields
 };

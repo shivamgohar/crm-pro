@@ -39,18 +39,24 @@ app.use(express.urlencoded({
 //     next();
 // });
 
-app.use(authRoutes); // <-- NEW
+app.use(authRoutes); 
 app.use("/api/customers", customerRoutes);
-app.use("/dashboard", dashboardRoutes);
-app.use("/products", productRoutes);
-app.use("/orders", orderRoutes);
-app.use("/reports", reportRoutes);
-app.use("/inventory", inventoryRoutes);
-app.use("/invoice", invoiceRoutes);
-app.use("/payments", paymentRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+// app.use("/products", productRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/invoice", invoiceRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/company/customer-fields", companyFieldRoutes);
 app.use("/api/company/customer-status", companyStatusRoutes);
+
+
+
+
+
 
 app.get("/", async (req, res) => {
   try {
