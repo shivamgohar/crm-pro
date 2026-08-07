@@ -1,5 +1,5 @@
 const { app, BrowserWindow } = require("electron");
-const path = require("path");
+const waitForServer = require("./waitForServer");
 
 let mainWindow;
 
@@ -16,20 +16,27 @@ function createWindow() {
     },
   });
 
-const path = require("path");
-
-if (app.isPackaged) {
-  mainWindow.loadFile(
-    path.join(__dirname, "../client/dist/index.html")
-  );
-} else {
-  mainWindow.loadURL("http://localhost:5173");
-  mainWindow.webContents.openDevTools();
-}
+  if (app.isPackaged) {
+    mainWindow.loadFile("client/dist/index.html");
+  } else {
+    mainWindow.loadURL("http://localhost:5173");
+    mainWindow.webContents.openDevTools();
+  }
 }
 
-app.whenReady().then(() => {
-  createWindow();
+app.whenReady().then(async () => {
+  try {
+    await waitForServer();
+
+    createWindow();
+
+  } catch (error) {
+
+    console.error(error);
+
+    app.quit();
+
+  }
 });
 
 app.on("window-all-closed", () => {

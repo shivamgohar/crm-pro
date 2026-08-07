@@ -1,3 +1,7 @@
+
+const appConfig = require("../../config/appConfig");
+
+
 const PDFDocument = require("pdfkit");
 
 
@@ -6,19 +10,16 @@ const drawHeader = (doc) => {
   doc
     .font("Helvetica-Bold")
     .fontSize(24)
-    .text("ACN GROUP", {
+    .text(appConfig.company, {
       align: "center",
     });
 
   doc
     .font("Helvetica")
     .fontSize(11)
-    .text(
-      "CRM Management System",
-      {
-        align: "center",
-      }
-    );
+    .text(appConfig.appName, {
+      align: "center",
+    });
 
   doc.moveDown(0.5);
 
@@ -98,8 +99,8 @@ const drawCustomerInfo = (doc, invoice) => {
   doc.text("Phone", 60, 255);
   doc.text(`: ${invoice.phone}`, 160, 255);
 
-//   doc.text("Email", 60, 275);
-//   doc.text(`: ${invoice.email}`, 160, 275);
+  //   doc.text("Email", 60, 275);
+  //   doc.text(`: ${invoice.email}`, 160, 275);
 
   doc.text("Address", 60, 275);
   doc.text(`: ${invoice.address}`, 160, 275);
@@ -243,7 +244,7 @@ const drawFooter = (doc) => {
     .fontSize(9)
     .fillColor("gray")
     .text(
-      "support@crmpro.com | www.crmpro.in",
+      `${appConfig.supportEmail} | ${appConfig.website}`,
       {
         width: 500,
         align: "center",
@@ -264,7 +265,7 @@ const drawFooter = (doc) => {
   doc.fillColor("black");
 
 };
-        
+
 
 const generateInvoicePDF = (invoice, res) => {
   const doc = new PDFDocument({
@@ -280,14 +281,16 @@ const generateInvoicePDF = (invoice, res) => {
 
   doc.pipe(res);
 
-drawHeader(doc);
-drawInvoiceInfo(doc, invoice);
-drawCustomerInfo(doc, invoice);
-drawProductTable(doc, invoice);
-drawGrandTotal(doc, invoice);
-drawFooter(doc);
+  drawHeader(doc);
+  drawInvoiceInfo(doc, invoice);
+  drawCustomerInfo(doc, invoice);
+  drawProductTable(doc, invoice);
+  drawGrandTotal(doc, invoice);
+  drawFooter(doc);
 
   doc.end();
+
+  // console.log(appConfig);
 
 };
 

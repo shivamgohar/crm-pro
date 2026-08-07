@@ -73,4 +73,15 @@ app.get("/", async (req, res) => {
   }
 });
 
+
+
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    app: "CRM PRO",
+    version: "1.0.0",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 module.exports = app;

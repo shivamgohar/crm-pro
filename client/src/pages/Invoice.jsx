@@ -109,7 +109,13 @@ function Invoice() {
   maxWidth="sm"
   fullWidth
 >
-  <DialogTitle sx={{ textAlign: "center", py: 3 }}>
+ <DialogTitle sx={{ p: 0 }}>
+  <Box
+    sx={{
+      textAlign: "center",
+      py: 3,
+    }}
+  >
     <Typography variant="h5" fontWeight={700}>
       ACN GROUP
     </Typography>
@@ -121,7 +127,8 @@ function Invoice() {
     <Typography variant="h6" fontWeight={700} mt={2}>
       INVOICE
     </Typography>
-  </DialogTitle>
+  </Box>
+</DialogTitle>
 
   <DialogContent>
     {selectedInvoice && (

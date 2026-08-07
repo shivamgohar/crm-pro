@@ -1,15 +1,14 @@
-
-
 {
   "name": "crm-pro",
   "version": "1.0.0",
-  "description": "CRM PRO Desktop",
+  "description": "CRM PRO Desktop Application",
+  "author": "Shivam Gohar",
   "main": "electron/main.js",
   "private": true,
 
   "scripts": {
     "electron": "electron .",
-    "dist": "electron-builder"
+    "dist": "electron-builder --win"
   },
 
   "dependencies": {
@@ -30,11 +29,43 @@
   "build": {
     "appId": "com.crmpro.desktop",
     "productName": "CRM PRO",
+
     "directories": {
       "output": "release"
     },
+
+    "files": [
+      "electron/**/*",
+      "client/dist/**/*",
+      "server/**/*",
+      "package.json"
+    ],
+
+    "extraResources": [
+      {
+        "from": "server",
+        "to": "server"
+      }
+    ],
+
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "CRM PRO"
     }
   }
 }

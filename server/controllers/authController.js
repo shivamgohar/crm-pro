@@ -1,6 +1,8 @@
+require("dotenv").config();
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
 
 const login = async (req, res) => {
   try {
@@ -34,7 +36,8 @@ const login = async (req, res) => {
         id: user.id,
         email: user.email,
       },
-      "mysecretkey",
+      // "mysecretkey",
+       process.env.JWT_SECRET,
       {
         expiresIn: "1h",
       }
