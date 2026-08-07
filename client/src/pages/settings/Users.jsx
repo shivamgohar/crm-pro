@@ -15,11 +15,22 @@ import {
 
 import SearchIcon from "@mui/icons-material/Search";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
+import AppBreadcrumb from "../../components/ui/AppBreadcrumb";
 
 function Users() {
   return (
     <Box>
-      {/* Header */}
+      {/* Header */}<AppBreadcrumb
+        items={[
+          {
+            label: "Settings",
+            path: "/settings",
+          },
+          {
+            label: "Users Management",
+          },
+        ]}
+      />
       <Box
         display="flex"
         justifyContent="space-between"

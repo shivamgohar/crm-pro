@@ -266,9 +266,9 @@ function Invoice() {
       variant="contained"
       onClick={() =>
         window.open(
-          `http://localhost:5000/invoice/pdf/${selectedInvoice.id}`,
+          `http://localhost:5000/api/invoice/pdf/${selectedInvoice.id}`,
           "_blank"
-        )
+        ) 
       }
     >
       Download PDF
@@ -278,7 +278,7 @@ function Invoice() {
       variant="contained"
       onClick={() => {
         const printWindow = window.open(
-          `http://localhost:5000/invoice/pdf/${selectedInvoice.id}`,
+          `http://localhost:5000/api/invoice/pdf/${selectedInvoice.id}`,
           "_blank"
         );
 

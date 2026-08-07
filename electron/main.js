@@ -1,4 +1,5 @@
 const { app, BrowserWindow } = require("electron");
+const path = require("path");
 
 let mainWindow;
 
@@ -15,11 +16,16 @@ function createWindow() {
     },
   });
 
-  // Vite Dev Server
-  mainWindow.loadURL("http://localhost:5173");
+const path = require("path");
 
-  // DevTools (abhi debugging ke liye)
+if (app.isPackaged) {
+  mainWindow.loadFile(
+    path.join(__dirname, "../client/dist/index.html")
+  );
+} else {
+  mainWindow.loadURL("http://localhost:5173");
   mainWindow.webContents.openDevTools();
+}
 }
 
 app.whenReady().then(() => {
