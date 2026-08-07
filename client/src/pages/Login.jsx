@@ -1,8 +1,9 @@
 import { useState } from "react";
-// import axios from "axios";
-import api from "../api/api";
+import axios from "axios";
+// import api from "../api/api";
 import { useNavigate } from "react-router-dom";
 import "../styles/login.css";
+import { Link as RouterLink } from "react-router-dom";
 
 import {
   Box,
@@ -11,6 +12,10 @@ import {
   TextField,
   Button,
   Alert,
+  FormControlLabel,
+  Checkbox,
+  Link,
+  Stack,
 } from "@mui/material";
 
 function Login() {
@@ -21,12 +26,18 @@ function Login() {
 
   const handleLogin = async () => {
     try {
-      const response = await api.post("/login", {
+      const response = await axios.post("http://localhost:5000/login", {
         email,
         password,
       });
 
       localStorage.setItem("token", response.data.token);
+      localStorage.setItem(
+  "user",
+  JSON.stringify(response.data.user)
+);
+
+console.log(response.data.user);
 
       navigate("/");
     } catch (error) {
@@ -40,15 +51,17 @@ function Login() {
     }
   };
 
+
+
   return (
     <Box
-    sx={{
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    bgcolor: "#f4f7fe",
-  }}
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        bgcolor: "#f4f7fe",
+      }}
     >
       <Paper
         elevation={6}
@@ -58,46 +71,26 @@ function Login() {
           borderRadius: 4,
         }}
       >
-       <Typography
-variant="h3"
-fontWeight="bold"
-align="center"
->
+        <Typography variant="h3" fontWeight="bold" align="center">
+          ACN GROUP
+        </Typography>
 
-ACN GROUP
+        <Typography
+          variant="subtitle1"
+          align="center"
+          color="text.secondary"
+          mb={3}
+        >
+          CRM Management System
+        </Typography>
 
-</Typography>
+        <Typography variant="h6" align="center" mb={1}>
+          Welcome Back 👋
+        </Typography>
 
-<Typography
-variant="subtitle1"
-align="center"
-color="text.secondary"
-mb={3}
->
-
-CRM Management System
-
-</Typography>
-
-<Typography
-variant="h6"
-align="center"
-mb={1}
->
-
-Welcome Back 👋
-
-</Typography>
-
-<Typography
-align="center"
-color="text.secondary"
-mb={3}
->
-
-Sign in to continue
-
-</Typography> 
+        <Typography align="center" color="text.secondary" mb={3}>
+          Sign in to continue
+        </Typography>
         <TextField
           label="Email"
           type="email"
@@ -116,6 +109,22 @@ Sign in to continue
           onChange={(e) => setPassword(e.target.value)}
         />
 
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mt: 1 }}
+        >
+          <FormControlLabel
+            control={<Checkbox size="small" />}
+            label="Remember Me"
+          />
+
+          <Link component={RouterLink} to="/forgot-password" underline="hover">
+            Forgot Password?
+          </Link>
+        </Stack>
+
         {errorMessage && (
           <Alert severity="error" sx={{ mt: 2 }}>
             {errorMessage}
@@ -131,6 +140,15 @@ Sign in to continue
         >
           Login
         </Button>
+
+        <Box mt={3} textAlign="center">
+          <Typography variant="body2" color="text.secondary">
+            Don't have an account?{" "}
+            <Link component={RouterLink} to="/register" underline="hover">
+              Create Account
+            </Link>
+          </Typography>
+        </Box>
       </Paper>
     </Box>
   );

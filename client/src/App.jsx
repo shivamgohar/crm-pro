@@ -13,14 +13,21 @@ function App() {
 
 const location = useLocation();
 
-const isLoginPage = location.pathname === "/login";
+// const isLoginPage = location.pathname === "/login";
+const authPages = [
+  "/login",
+  "/register",
+  "/forgot-password",
+];
+
+const isAuthPage = authPages.includes(location.pathname);
   
  return (
 
   <div className="app">
 
     {
-      !isLoginPage && <Navbar />
+      !isAuthPage && <Navbar />
     }
 <div
   style={{
@@ -29,15 +36,15 @@ const isLoginPage = location.pathname === "/login";
 >
 
       {
-        !isLoginPage && < Sidebar />
+        !isAuthPage && < Sidebar />
       }
 
     <div
   style={{
     flex: 1,
-    marginLeft: isLoginPage ? 0 : 0,
-    marginTop: isLoginPage ? 0 : 72,
-    padding: isLoginPage ? 0 : 16,
+    marginLeft: isAuthPage ? 0 : 0,
+    marginTop: isAuthPage ? 0 : 72,
+    padding: isAuthPage ? 0 : 16,
     background: "#f8fafc",
     minHeight: "100vh",
     boxSizing: "border-box",

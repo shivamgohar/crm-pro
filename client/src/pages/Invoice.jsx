@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 // import axios from "axios";
 import api from "../api/api";
-import { Divider } from "@mui/material";
+// import { Divider } from "@mui/material";
 
 import {
   Box,
@@ -103,101 +103,198 @@ function Invoice() {
         </TableContainer>
       </Box>
 
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Invoice Details</DialogTitle>
+    <Dialog
+  open={open}
+  onClose={() => setOpen(false)}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle sx={{ textAlign: "center", py: 3 }}>
+    <Typography variant="h5" fontWeight={700}>
+      ACN GROUP
+    </Typography>
 
-        <DialogContent>
-          {selectedInvoice && (
-            <Box>
-              <Typography>
-                <b>Invoice No:</b> INV-
-                {selectedInvoice.id.toString().padStart(4, "0")}
-              </Typography>
-              <Typography>
-                <b>Date:</b>{" "}
-                {new Date(selectedInvoice.created_at).toLocaleDateString()}
-              </Typography>
+    <Typography variant="body2" color="text.secondary">
+      CRM Management System
+    </Typography>
 
-                <Divider sx={{ my: 2 }} />
-                <DialogTitle>Customer Information</DialogTitle>
-              <Typography>
-                <b>Customer:</b> {selectedInvoice.customer_name}
-              </Typography>
+    <Typography variant="h6" fontWeight={700} mt={2}>
+      INVOICE
+    </Typography>
+  </DialogTitle>
 
-              <Typography>
-                <b>Phone:</b> {selectedInvoice.phone}
-              </Typography>
+  <DialogContent>
+    {selectedInvoice && (
+      <Box>
 
-              <Typography>
-                <b>Email:</b> {selectedInvoice.email}
-              </Typography>
+        {/* Invoice Info */}
 
-              <Typography>
-                <b>Address:</b> {selectedInvoice.address}
-              </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            mb: 3,
+          }}
+        >
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Invoice Number
+            </Typography>
 
-              <Divider sx={{ my: 2 }} />
-              <DialogTitle>Product Information</DialogTitle>
-              <Typography>
-                <b>Product:</b> {selectedInvoice.product_name}
-              </Typography>
+            <Typography fontWeight={600}>
+              INV-{selectedInvoice.id.toString().padStart(4, "0")}
+            </Typography>
+          </Box>
 
-              <Typography>
-                <b>Category:</b> {selectedInvoice.category}
-              </Typography>
+          <Box textAlign="right">
+            <Typography variant="body2" color="text.secondary">
+              Invoice Date
+            </Typography>
 
-              <Typography>
-                <b>Unit Price:</b> ₹ {selectedInvoice.price}
-              </Typography>
+            <Typography fontWeight={600}>
+              {new Date(
+                selectedInvoice.created_at
+              ).toLocaleDateString("en-IN")}
+            </Typography>
+          </Box>
+        </Box>
 
-              <Typography>
-                <b>Quantity:</b> {selectedInvoice.quantity}
-              </Typography>
+        {/* Customer */}
 
-              <Typography>
-                <b>Total:</b> ₹ {selectedInvoice.total}
-              </Typography>
-            </Box>
-          )}
-        </DialogContent>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            mb: 2,
+          }}
+        >
+          <Typography
+            variant="h6"
+            fontWeight={600}
+            mb={2}
+          >
+            Customer Information
+          </Typography>
 
-        <DialogActions>
-        <Button
-    variant="contained"
-    onClick={() => {
+          <Typography>
+            <b>Name :</b> {selectedInvoice.customer_name}
+          </Typography>
+
+          <Typography>
+            <b>Phone :</b> {selectedInvoice.phone}
+          </Typography>
+
+          <Typography>
+            <b>Email :</b> {selectedInvoice.email}
+          </Typography>
+
+          <Typography>
+            <b>Address :</b> {selectedInvoice.address}
+          </Typography>
+        </Paper>
+
+        {/* Product */}
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            mb: 2,
+          }}
+        >
+          <Typography
+            variant="h6"
+            fontWeight={600}
+            mb={2}
+          >
+            Product Information
+          </Typography>
+
+          <Typography>
+            <b>Product :</b> {selectedInvoice.product_name}
+          </Typography>
+
+          <Typography>
+            <b>Category :</b> {selectedInvoice.category}
+          </Typography>
+
+          <Typography>
+            <b>Unit Price :</b> ₹ {selectedInvoice.price}
+          </Typography>
+
+          <Typography>
+            <b>Quantity :</b> {selectedInvoice.quantity}
+          </Typography>
+
+          <Typography>
+            <b>Total :</b> ₹ {selectedInvoice.total}
+          </Typography>
+        </Paper>
+
+        {/* Grand Total */}
+
+        <Paper
+          sx={{
+            mt: 2,
+            p: 2,
+            bgcolor: "primary.main",
+            color: "#fff",
+            textAlign: "right",
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="body2">
+            Grand Total
+          </Typography>
+
+          <Typography
+            variant="h5"
+            fontWeight={700}
+          >
+            ₹ {selectedInvoice.total}
+          </Typography>
+        </Paper>
+
+      </Box>
+    )}
+  </DialogContent>
+
+  <DialogActions>
+    <Button
+      variant="contained"
+      onClick={() =>
         window.open(
-            `http://localhost:5000/invoice/pdf/${selectedInvoice.id}`,
-            "_blank"
+          `http://localhost:5000/invoice/pdf/${selectedInvoice.id}`,
+          "_blank"
+        )
+      }
+    >
+      Download PDF
+    </Button>
+
+    <Button
+      variant="contained"
+      onClick={() => {
+        const printWindow = window.open(
+          `http://localhost:5000/invoice/pdf/${selectedInvoice.id}`,
+          "_blank"
         );
-    }}
->
-    Download PDF
-</Button>
 
-        <Button
-  variant="contained"
-  onClick={() => {
-    const printWindow = window.open(
-      `http://localhost:5000/invoice/pdf/${selectedInvoice.id}`,
-      "_blank"
-    );
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }}
+    >
+      Print
+    </Button>
 
-    printWindow.onload = () => {
-      printWindow.print();
-    };
-  }}
->
-  Print
-</Button>
-          <Button onClick={() => setOpen(false)}>Close</Button>
-         
-        </DialogActions>
-      </Dialog>
+    <Button onClick={() => setOpen(false)}>
+      Close
+    </Button>
+  </DialogActions>
+</Dialog>
     </>
   );
 }

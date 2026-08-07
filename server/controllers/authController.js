@@ -46,7 +46,10 @@ const login = async (req, res) => {
       token,
       user: {
         id: user.id,
+        fullName: user.full_name,
+        mobile: user.mobile,
         email: user.email,
+        role: user.role,
       },
     });
 
@@ -64,7 +67,7 @@ const register = async (req, res) => {
 
   try {
 
-    const { email, password } = req.body;
+    const { fullName, mobile, email, password } = req.body;
 
     // Check Email First
     const existingUser = await db.query(
@@ -84,8 +87,34 @@ const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await db.query(
-      "INSERT INTO users(email, password) VALUES($1,$2)",
-      [email, hashedPassword]
+      `
+  INSERT INTO users
+  (
+    full_name,
+    mobile,
+    email,
+    password,
+    role,
+    is_active
+  )
+  VALUES
+  (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6
+  )
+  `,
+      [
+        fullName,
+        mobile,
+        email,
+        hashedPassword,
+        "Admin",
+        true,
+      ]
     );
 
     res.json({

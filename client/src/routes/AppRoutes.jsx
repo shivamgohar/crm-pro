@@ -16,6 +16,9 @@ import Settings from "../pages/settings/Settings";
 import CustomerStatus from "../pages/settings/CustomerStatus";
 import ImportWizard from "../modules/import/pages/ImportWizard";
 import DataManagement from "../pages/settings/DataManagement";
+import Register from "../pages/Register";
+import ForgotPassword from "../pages/ForgotPassword";
+import Users from "../pages/settings/Users";
 
 // import ImportWizard from "../modules/shared/import/pages/ImportWizard";
 
@@ -135,7 +138,7 @@ function AppRoutes() {
         }
       />
 
-        <Route
+      <Route
         path="/settings/data-management"
         element={
           <ProtectedRoute>
@@ -143,6 +146,20 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+<Route
+  path="/settings/users"
+  element={
+    <ProtectedRoute>
+      <Users />
+    </ProtectedRoute>
+  }
+/>
+
+
+      <Route path="/register" element={<Register />} />
+
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       <Route path="/login" element={<Login />} />
     </Routes>

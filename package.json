@@ -1,8 +1,40 @@
+
+
 {
+  "name": "crm-pro",
+  "version": "1.0.0",
+  "description": "CRM PRO Desktop",
+  "main": "electron/main.js",
+  "private": true,
+
+  "scripts": {
+    "electron": "electron .",
+    "dist": "electron-builder"
+  },
+
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.2.0",
     "@mui/material": "^9.2.0"
+  },
+
+  "devDependencies": {
+    "concurrently": "^10.0.4",
+    "cross-env": "^10.1.0",
+    "electron": "^43.3.0",
+    "electron-builder": "^26.15.3",
+    "wait-on": "^9.1.0"
+  },
+
+  "build": {
+    "appId": "com.crmpro.desktop",
+    "productName": "CRM PRO",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis"
+    }
   }
 }

@@ -56,7 +56,7 @@ function Settings() {
       description: "Manage users",
       icon: <ManageAccounts fontSize="large" />,
       path: "/settings/users",
-      disabled: true,
+      disabled: false,
     },
     {
       title: "Roles & Permissions",
