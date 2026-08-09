@@ -8,6 +8,36 @@ const importCustomersService = async (rows) => {
   let failedCount = 0;
   const errors = [];
 
+  const batchResult = await db.query(
+    `
+  INSERT INTO import_batches
+  (
+    source,
+    file_name,
+    total_rows
+  )
+  VALUES
+  (
+    $1,
+    $2,
+    $3
+  )
+  RETURNING id
+  `,
+    [
+      "excel",
+      "Excel Import",
+      rows.length,
+    ]
+  );
+
+  const importBatchId = batchResult.rows[0].id;
+
+  console.log(
+    "Import Batch ID:",
+    importBatchId
+  );
+
   console.log("Total Rows :", rows.length);
 
   const companyFields = await db.query(`
@@ -49,6 +79,7 @@ const importCustomersService = async (rows) => {
       address,
       customer_code,
       source,
+      import_batch_id
     )
     VALUES
     (
@@ -56,7 +87,8 @@ const importCustomersService = async (rows) => {
       $2,
       $3,
       $4,
-       $5,
+      $5,
+      $6
     )
 
      RETURNING id
@@ -66,7 +98,8 @@ const importCustomersService = async (rows) => {
             String(row.phone || ""),
             row.location || "",
             String(row.customer_code || ""),
-             "excel",
+            "excel",
+             importBatchId,
           ]
         );
 
@@ -144,8 +177,8 @@ const convertExcelDate = (value) => {
   }
 
   if (!value || value < 1000) {
-  return "";
-}
+    return "";
+  }
 
   const date = new Date(
     (value - 25569) * 86400 * 1000
@@ -177,17 +210,17 @@ const saveDynamicFields = async (
     }
 
     const value = [
-  "date",
-  "last_service",
-  "date_of_instalation",
-].includes(fieldKey)
-  ? convertExcelDate(fieldValue)
-  : String(fieldValue ?? "");
+      "date",
+      "last_service",
+      "date_of_instalation",
+    ].includes(fieldKey)
+      ? convertExcelDate(fieldValue)
+      : String(fieldValue ?? "");
 
-  console.log(fieldKey, fieldValue, value);
+    console.log(fieldKey, fieldValue, value);
 
     await db.query(
-  `
+      `
   INSERT INTO customer_field_values
   (
     customer_id,
@@ -206,12 +239,12 @@ const saveDynamicFields = async (
     field_value = EXCLUDED.field_value,
     updated_at = CURRENT_TIMESTAMP
   `,
-  [
-    customerId,
-    fieldId,
-    value,
-  ]
-);
+      [
+        customerId,
+        fieldId,
+        value,
+      ]
+    );
 
   }
 

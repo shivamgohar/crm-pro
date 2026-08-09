@@ -20,6 +20,7 @@ import Register from "../pages/Register";
 import ForgotPassword from "../pages/ForgotPassword";
 import Users from "../pages/settings/Users";
 import CleanImportedData from "../pages/settings/CleanImportedData";
+import Trash from "../pages/settings/Trash";
 
 // import ImportWizard from "../modules/shared/import/pages/ImportWizard";
 
@@ -162,6 +163,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Users />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings/trash"
+        element={
+          <ProtectedRoute>
+            <Trash />
           </ProtectedRoute>
         }
       />

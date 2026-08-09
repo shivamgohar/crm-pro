@@ -2,7 +2,7 @@ const db = require("../config/db");
 const XLSX = require("xlsx");
 
 const {
-    importCustomersService,
+  importCustomersService,
 } = require("../services/importService");
 
 const addCustomer = async (req, res) => {
@@ -66,7 +66,7 @@ const addCustomer = async (req, res) => {
       `
   INSERT INTO customers
   (customer_code, name, phone,source)
-  VALUES ($1, $2, $3, $5)
+  VALUES ($1, $2, $3, $4)
   RETURNING id
   `,
       [
@@ -195,15 +195,15 @@ const getCustomers = async (req, res) => {
 
   try {
 
-   const {
-  search = "",
-  searchBy = "all",
-  status = "all",
-  area = "all",
-  sort = "name",
-  page = 1,
-  limit = 10,
-} = req.query;
+    const {
+      search = "",
+      searchBy = "all",
+      status = "all",
+      area = "all",
+      sort = "name",
+      page = 1,
+      limit = 10,
+    } = req.query;
 
 
     const currentPage = Number(page);
@@ -217,22 +217,19 @@ const getCustomers = async (req, res) => {
 
     const totalResult = await db.query(
       `
-SELECT COUNT(*) AS total
-
-FROM customers
-
-WHERE
-
-    $1 = ''
-
-    OR CAST(id AS TEXT) ILIKE '%' || $1 || '%'
-
-    OR name ILIKE '%' || $1 || '%'
-
-    OR phone ILIKE '%' || $1 || '%'
-
-    OR email ILIKE '%' || $1 || '%'
-`,
+  SELECT COUNT(*) AS total
+  FROM customers
+  WHERE is_deleted = false
+    AND (
+      $1 = ''
+      OR CAST(id AS TEXT) ILIKE '%' || $1 || '%'
+      OR name ILIKE '%' || $1 || '%'
+      OR phone ILIKE '%' || $1 || '%'
+      OR email ILIKE '%' || $1 || '%'
+      OR customer_code ILIKE '%' || $1 || '%'
+      OR address ILIKE '%' || $1 || '%'
+    )
+  `,
       [search]
     );
 
@@ -267,60 +264,60 @@ WHERE
 
 
     let whereClause = "";
-const values = [];
+    const values = [];
 
-if (search === "") {
-  whereClause = "TRUE";
-} else {
-  values.push(search);
+    if (search === "") {
+      whereClause = "TRUE";
+    } else {
+      values.push(search);
 
-  switch (searchBy) {
-    case "customer_code":
-      whereClause = `customer_code ILIKE '%' || $1 || '%'`;
-      break;
+      switch (searchBy) {
+        case "customer_code":
+          whereClause = `customer_code ILIKE '%' || $1 || '%'`;
+          break;
 
-    case "phone":
-      whereClause = `phone ILIKE '%' || $1 || '%'`;
-      break;
+        case "phone":
+          whereClause = `phone ILIKE '%' || $1 || '%'`;
+          break;
 
-    case "name":
-      whereClause = `name ILIKE '%' || $1 || '%'`;
-      break;
+        case "name":
+          whereClause = `name ILIKE '%' || $1 || '%'`;
+          break;
 
-    case "address":
-      whereClause = `address ILIKE '%' || $1 || '%'`;
-      break;
+        case "address":
+          whereClause = `address ILIKE '%' || $1 || '%'`;
+          break;
 
-    default:
-      whereClause = `
+        default:
+          whereClause = `
         customer_code ILIKE '%' || $1 || '%'
         OR name ILIKE '%' || $1 || '%'
         OR phone ILIKE '%' || $1 || '%'
         OR email ILIKE '%' || $1 || '%'
         OR address ILIKE '%' || $1 || '%'
       `;
-  }
-}
+      }
+    }
 
-const result = await db.query(
-  `
+    const result = await db.query(
+      `
 SELECT DISTINCT ON (customer_code) *
 
 FROM customers
-
-WHERE ${whereClause}
+WHERE is_deleted = false
+AND (${whereClause})
 
 ORDER BY customer_code, id DESC
 
 LIMIT $${values.length + 1}
 OFFSET $${values.length + 2}
 `,
-[
-  ...values,
-  pageSize,
-  offset,
-]
-);
+      [
+        ...values,
+        pageSize,
+        offset,
+      ]
+    );
     res.json({
       success: true,
       customers: result.rows,
@@ -356,6 +353,7 @@ const getCustomerById = async (req, res) => {
       SELECT *
       FROM customers
       WHERE id = $1
+AND is_deleted = false
       LIMIT 1;
       `,
       [id]
@@ -418,23 +416,21 @@ const updateCustomer = async (req, res) => {
     await db.query("BEGIN");
 
     await db.query(
-      `UPDATE customers
-
-SET
-
-customer_code=$1,
-
-name=$2,
-
-phone=$3
-
-WHERE id=$4`,
+      `
+  UPDATE customers
+  SET
+    customer_code = $1,
+    name = $2,
+    phone = $3
+  WHERE id = $4
+    AND is_deleted = false
+  `,
       [
- fields.customer_code,
- fields.customer_name,
- fields.phone,
- id
-]
+        fields.customer_code,
+        fields.customer_name,
+        fields.phone,
+        id,
+      ]
     );
 
     const fieldsResult = await db.query(`
@@ -442,50 +438,50 @@ WHERE id=$4`,
   FROM company_customer_fields
 `);
 
-const fieldMap = {};
+    const fieldMap = {};
 
-fieldsResult.rows.forEach((field) => {
-  fieldMap[field.field_key] = field.id;
-});
+    fieldsResult.rows.forEach((field) => {
+      fieldMap[field.field_key] = field.id;
+    });
 
 
-await db.query(
-  `
+    await db.query(
+      `
   DELETE FROM customer_field_values
   WHERE customer_id = $1
   `,
-  [id]
-);
+      [id]
+    );
 
-for (const [fieldKey, fieldValue] of Object.entries(fields)) {
+    for (const [fieldKey, fieldValue] of Object.entries(fields)) {
 
-  if (
-    fieldKey === "customer_code" ||
-    fieldKey === "customer_name" ||
-    fieldKey === "phone"
-  ) {
-    continue;
-  }
+      if (
+        fieldKey === "customer_code" ||
+        fieldKey === "customer_name" ||
+        fieldKey === "phone"
+      ) {
+        continue;
+      }
 
-  if (!fieldMap[fieldKey]) {
-    continue;
-  }
+      if (!fieldMap[fieldKey]) {
+        continue;
+      }
 
-  await db.query(
-    `
+      await db.query(
+        `
     INSERT INTO customer_field_values
     (customer_id, field_id, field_value)
     VALUES ($1, $2, $3)
     `,
-    [
-      id,
-      fieldMap[fieldKey],
-      fieldValue,
-    ]
-  );
-}
+        [
+          id,
+          fieldMap[fieldKey],
+          fieldValue,
+        ]
+      );
+    }
 
-await db.query("COMMIT");
+    await db.query("COMMIT");
 
     res.json({
       success: true,
@@ -511,10 +507,26 @@ const deleteCustomer = async (req, res) => {
 
     const { id } = req.params;
 
-    await db.query(
-      "DELETE FROM customers WHERE id = $1",
-      [id]
+    const result = await db.query(
+      `
+  UPDATE customers
+  SET
+    is_deleted = true,
+    deleted_at = CURRENT_TIMESTAMP,
+    deleted_by = $2
+  WHERE id = $1
+    AND is_deleted = false
+  RETURNING id
+  `,
+      [id, req.user.id]
     );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }
 
     res.json({
       success: true,
@@ -534,9 +546,379 @@ const deleteCustomer = async (req, res) => {
 
 };
 
+const getTrashedCustomers = async (req, res) => {
+  try {
+    const {
+      search = "",
+      page = 1,
+      limit = 20,
+    } = req.query;
 
-// Legacy Excel importer (old ACN format)
-// Keep only for reference until new importer is complete.
+    const currentPage = Number(page);
+    const pageSize = Number(limit);
+    const offset = (currentPage - 1) * pageSize;
+
+    const searchValue = search.trim();
+
+    const countResult = await db.query(
+      `
+      SELECT COUNT(*) AS total
+      FROM customers
+      WHERE is_deleted = true
+        AND (
+          $1 = ''
+          OR customer_code ILIKE '%' || $1 || '%'
+          OR name ILIKE '%' || $1 || '%'
+          OR phone ILIKE '%' || $1 || '%'
+          OR email ILIKE '%' || $1 || '%'
+          OR address ILIKE '%' || $1 || '%'
+        )
+      `,
+      [searchValue]
+    );
+
+    const totalRecords = Number(
+      countResult.rows[0].total
+    );
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        customer_code,
+        name,
+        phone,
+        email,
+        address,
+        deleted_at,
+        deleted_by
+      FROM customers
+      WHERE is_deleted = true
+        AND (
+          $1 = ''
+          OR customer_code ILIKE '%' || $1 || '%'
+          OR name ILIKE '%' || $1 || '%'
+          OR phone ILIKE '%' || $1 || '%'
+          OR email ILIKE '%' || $1 || '%'
+          OR address ILIKE '%' || $1 || '%'
+        )
+      ORDER BY deleted_at DESC
+      LIMIT $2
+      OFFSET $3
+      `,
+      [
+        searchValue,
+        pageSize,
+        offset,
+      ]
+    );
+
+    res.json({
+      success: true,
+      customers: result.rows,
+      pagination: {
+        currentPage,
+        pageSize,
+        totalRecords,
+        totalPages: Math.ceil(
+          totalRecords / pageSize
+        ),
+      },
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+const getActiveCustomersForTrash = async (req, res) => {
+  try {
+    const {
+      search = "",
+      page = 1,
+      limit = 20,
+    } = req.query;
+
+    const currentPage = Number(page);
+    const pageSize = Number(limit);
+    const offset = (currentPage - 1) * pageSize;
+
+    const searchValue = search.trim();
+
+    const countResult = await db.query(
+      `
+      SELECT COUNT(*) AS total
+      FROM customers
+      WHERE is_deleted = false
+        AND (
+          $1 = ''
+          OR customer_code ILIKE '%' || $1 || '%'
+          OR name ILIKE '%' || $1 || '%'
+          OR phone ILIKE '%' || $1 || '%'
+          OR email ILIKE '%' || $1 || '%'
+          OR address ILIKE '%' || $1 || '%'
+        )
+      `,
+      [searchValue]
+    );
+
+    const totalRecords = Number(
+      countResult.rows[0].total
+    );
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        customer_code,
+        name,
+        phone,
+        email,
+        address,
+        created_at
+      FROM customers
+      WHERE is_deleted = false
+        AND (
+          $1 = ''
+          OR customer_code ILIKE '%' || $1 || '%'
+          OR name ILIKE '%' || $1 || '%'
+          OR phone ILIKE '%' || $1 || '%'
+          OR email ILIKE '%' || $1 || '%'
+          OR address ILIKE '%' || $1 || '%'
+        )
+      ORDER BY name ASC
+      LIMIT $2
+      OFFSET $3
+      `,
+      [
+        searchValue,
+        pageSize,
+        offset,
+      ]
+    );
+
+    res.json({
+      success: true,
+      customers: result.rows,
+      pagination: {
+        currentPage,
+        pageSize,
+        totalRecords,
+        totalPages: Math.ceil(
+          totalRecords / pageSize
+        ),
+      },
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+const restoreCustomers = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No customers selected",
+      });
+    }
+
+    const customerIds = ids
+      .map(Number)
+      .filter(Number.isInteger);
+
+    if (customerIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid customer IDs",
+      });
+    }
+
+    const result = await db.query(
+      `
+      UPDATE customers
+      SET
+        is_deleted = false,
+        deleted_at = NULL,
+        deleted_by = NULL
+      WHERE id = ANY($1::int[])
+        AND is_deleted = true
+      RETURNING id
+      `,
+      [customerIds]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Customers not found in trash",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `${result.rows.length} customer(s) restored successfully`,
+      restored: result.rows.length,
+    });
+
+  } catch (error) {
+    console.error("Restore Customers Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+const permanentlyDeleteCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      `
+      DELETE FROM customers
+      WHERE id = $1
+        AND is_deleted = true
+      RETURNING id
+      `,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found in trash",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Customer Permanently Deleted",
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+const moveCustomersToTrash = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No customers selected",
+      });
+    }
+
+    const result = await db.query(
+      `
+      UPDATE customers
+      SET
+        is_deleted = true,
+        deleted_at = CURRENT_TIMESTAMP,
+        deleted_by = $2
+      WHERE id = ANY($1::int[])
+        AND is_deleted = false
+      RETURNING id
+      `,
+      [ids, req.user.id]
+    );
+
+    res.json({
+      success: true,
+      message: "Customers moved to trash",
+      affected: result.rowCount,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+
+const permanentlyDeleteCustomers = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No customers selected",
+      });
+    }
+
+    const customerIds = ids
+      .map(Number)
+      .filter(Number.isInteger);
+
+    if (customerIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid customer IDs",
+      });
+    }
+
+    const result = await db.query(
+      `
+      DELETE FROM customers
+      WHERE id = ANY($1::int[])
+        AND is_deleted = true
+      RETURNING id
+      `,
+      [customerIds]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Customers not found in trash",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `${result.rows.length} customer(s) permanently deleted`,
+      deleted: result.rows.length,
+    });
+
+  } catch (error) {
+    console.error(
+      "Permanent Delete Customers Error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
 
 const importCustomersLegacy = async (req, res) => {
   console.log("NEW IMPORT FUNCTION RUNNING");
@@ -648,141 +1030,43 @@ const importCustomersLegacy = async (req, res) => {
 
 };
 
-// const importCustomers = async (req, res) => {
-//   try {
-
-//     console.log("NEW JSON IMPORT");
-
-//     const rows = req.body.rows;
-
-//     const result = await importCustomersService(rows);
-
-// return res.json(result);
-
-//     let importedCount = 0;
-//     let skippedCount = 0;
-//     let failedCount = 0;
-
-//     console.log("Total Rows :", rows.length);
-
-//     for (const row of rows) {
-
-//       try {
-
-//         console.log(row.customer_code, row.customer_name);
-
-//         const existingCustomer = await db.query(
-//           `
-//           SELECT id
-//           FROM customers
-//           WHERE customer_code = $1
-//           LIMIT 1
-//           `,
-//           [
-//             String(row.customer_code || "")
-//           ]
-//         );
-
-//         if (existingCustomer.rows.length === 0) {
-
-//           await db.query(
-//             `
-//             INSERT INTO customers
-//             (
-//               name,
-//               phone,
-//               address,
-//               customer_code
-//             )
-//             VALUES
-//             (
-//               $1,
-//               $2,
-//               $3,
-//               $4
-//             )
-//             `,
-//             [
-//               row.customer_name,
-//               String(row.phone || ""),
-//               row.location || "",
-//               String(row.customer_code || ""),
-//             ]
-//           );
-
-//           importedCount++;
-
-//         } else {
-
-//           skippedCount++;
-
-//         }
-
-//       } catch (error) {
-
-//         failedCount++;
-
-//         console.error(
-//           `Failed Row: ${row.customer_code}`,
-//           error.message
-//         );
-
-//       }
-
-//     }
-
-//     return res.json({
-//       success: true,
-//       total: rows.length,
-//       imported: importedCount,
-//       skipped: skippedCount,
-//       failed: failedCount,
-//     });
-
-//   } catch (error) {
-
-//     console.error(error);
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Import Failed",
-//     });
-
-//   }
-// };
-
-
 const importCustomers = async (req, res) => {
 
-    try {
+  try {
 
-        console.log("NEW JSON IMPORT");
+    console.log("NEW JSON IMPORT");
 
-        const rows = req.body.rows;
+    const rows = req.body.rows;
 
-        const result = await importCustomersService(rows);
+    const result = await importCustomersService(rows);
 
-        return res.json(result);
+    return res.json(result);
 
-    } catch (error) {
+  } catch (error) {
 
-        console.error(error);
+    console.error(error);
 
-        return res.status(500).json({
-            success: false,
-            message: "Import Failed",
-        });
+    return res.status(500).json({
+      success: false,
+      message: "Import Failed",
+    });
 
-    }
+  }
 
 };
 
 module.exports = {
   addCustomer,
-  getCustomers,   
+  getCustomers,
   getCustomerById,
   updateCustomer,
   deleteCustomer,
   importCustomersLegacy,
   importCustomers,
+  getTrashedCustomers,
+  permanentlyDeleteCustomer,
+  moveCustomersToTrash,
+  restoreCustomers,
+  permanentlyDeleteCustomers,
+  getActiveCustomersForTrash,
 };

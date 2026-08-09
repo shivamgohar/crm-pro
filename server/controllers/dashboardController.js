@@ -5,7 +5,8 @@ const getDashboard = async (req, res) => {
   try {
 
     const customerResult = await db.query(
-      "SELECT COUNT(*) FROM customers"
+      // "SELECT COUNT(*) FROM customers"
+       "SELECT COUNT(*) FROM customers WHERE is_deleted = false"
     );
 
     const productResult = await db.query(
