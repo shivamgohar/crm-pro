@@ -14,6 +14,7 @@ import {
   Backup,
   Restore,
   CleaningServices,
+    DeleteSweep,
 } from "@mui/icons-material";
 
 import { useNavigate } from "react-router-dom";
@@ -54,6 +55,14 @@ function DataManagement() {
       icon: <CleaningServices fontSize="large" />,
       disabled: true,
     },
+{
+  title: "Clean Imported Data",
+  description: "Remove previously imported customer data",
+  icon: <DeleteSweep />,
+  path: "/settings/data-management/clean-imported",
+  disabled: false,
+},
+
   ];
 
   return (

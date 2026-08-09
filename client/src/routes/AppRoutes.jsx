@@ -19,6 +19,7 @@ import DataManagement from "../pages/settings/DataManagement";
 import Register from "../pages/Register";
 import ForgotPassword from "../pages/ForgotPassword";
 import Users from "../pages/settings/Users";
+import CleanImportedData from "../pages/settings/CleanImportedData";
 
 // import ImportWizard from "../modules/shared/import/pages/ImportWizard";
 
@@ -147,15 +148,23 @@ function AppRoutes() {
         }
       />
 
-<Route
-  path="/settings/users"
-  element={
-    <ProtectedRoute>
-      <Users />
-    </ProtectedRoute>
-  }
-/>
+      <Route
+        path="/settings/data-management/clean-imported"
+        element={
+          <ProtectedRoute>
+            <CleanImportedData />
+          </ProtectedRoute>
+        }
+      />
 
+      <Route
+        path="/settings/users"
+        element={
+          <ProtectedRoute>
+            <Users />
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="/register" element={<Register />} />
 

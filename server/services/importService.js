@@ -47,14 +47,16 @@ const importCustomersService = async (rows) => {
       name,
       phone,
       address,
-      customer_code
+      customer_code,
+      source,
     )
     VALUES
     (
       $1,
       $2,
       $3,
-      $4
+      $4,
+       $5,
     )
 
      RETURNING id
@@ -64,6 +66,7 @@ const importCustomersService = async (rows) => {
             String(row.phone || ""),
             row.location || "",
             String(row.customer_code || ""),
+             "excel",
           ]
         );
 

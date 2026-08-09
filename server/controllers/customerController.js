@@ -65,14 +65,15 @@ const addCustomer = async (req, res) => {
     const customerResult = await db.query(
       `
   INSERT INTO customers
-  (customer_code, name, phone)
-  VALUES ($1, $2, $3)
+  (customer_code, name, phone,source)
+  VALUES ($1, $2, $3, $5)
   RETURNING id
   `,
       [
         fields.customer_code,
         fields.customer_name,
         fields.phone,
+        "crm",
       ]
     );
 

@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("./config/db");
-const authRoutes = require("./routes/authRoutes"); // <-- NEW
+const authRoutes = require("./routes/authRoutes");
+const protectedActionRoutes = require("./routes/protectedActionRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const productRoutes = require("./routes/productRoutes");
@@ -40,6 +41,7 @@ app.use(express.urlencoded({
 // });
 
 app.use(authRoutes); 
+app.use("/api/protected-actions", protectedActionRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 // app.use("/products", productRoutes);
