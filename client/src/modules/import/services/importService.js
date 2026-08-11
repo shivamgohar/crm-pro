@@ -15,17 +15,15 @@ export const getImportFields = async () => {
 };
 
 
-export const importCustomers = async (rows) => {
+export const importCustomers = async (rows, sourceMeta = null) => {
 
   const response = await api.post(
     "/customers/import",
     {
       rows,
+      sourceMeta,
     }
   );
 
   return response.data;
-
 };
-
-

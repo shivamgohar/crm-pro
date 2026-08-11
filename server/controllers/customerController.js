@@ -1036,9 +1036,18 @@ const importCustomers = async (req, res) => {
 
     console.log("NEW JSON IMPORT");
 
-    const rows = req.body.rows;
+const rows = req.body.rows;
+const sourceMeta = req.body.sourceMeta || null;
 
-    const result = await importCustomersService(rows);
+console.log("SOURCE META:", sourceMeta);
+console.log("FIRST ROW:", rows?.[0]);
+
+const result = await importCustomersService(
+  rows,
+  sourceMeta
+);
+
+
 
     return res.json(result);
 

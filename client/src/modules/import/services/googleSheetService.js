@@ -116,3 +116,49 @@ export const fetchGoogleSheetData = async ({
 
   return data.values || [];
 };
+
+
+
+export const fetchGoogleSheetMetadata = async ({
+  spreadsheetId,
+  accessToken,
+}) => {
+  if (!spreadsheetId) {
+    throw new Error("Spreadsheet ID is required.");
+  }
+
+  if (!accessToken) {
+    throw new Error("Google access token is required.");
+  }
+
+  const response = await fetch(
+    `${GOOGLE_SHEETS_API}/${spreadsheetId}?fields=sheets(properties(sheetId,title))`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+
+    throw new Error(
+      error?.error?.message ||
+        "Failed to fetch Google Sheet metadata."
+    );
+  }
+
+  const data = await response.json();
+
+  const sheets = data.sheets || [];
+
+  if (sheets.length === 0) {
+    throw new Error("No sheets found in this Google Spreadsheet.");
+  }
+
+  return sheets.map((sheet) => ({
+    sheetId: sheet.properties.sheetId,
+    sheetName: sheet.properties.title,
+  }));
+};

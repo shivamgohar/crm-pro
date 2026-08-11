@@ -1,21 +1,22 @@
 export const transformRows = (rows, mapping) => {
+  return rows.map((row) => {
+    const transformed = {};
 
-    return rows.map((row) => {
+    Object.entries(mapping).forEach(
+      ([excelColumn, crmField]) => {
+        if (!crmField) return;
 
-        const transformed = {};
+        transformed[crmField] =
+          row[excelColumn];
+      }
+    );
 
-        Object.entries(mapping).forEach(([excelColumn, crmField]) => {
+    // Preserve Google Sheet row number
+    if (row.__google_row) {
+      transformed.__google_row =
+        row.__google_row;
+    }
 
-
-             // Skip unmapped columns
-      if (!crmField) return;
-
-            transformed[crmField] = row[excelColumn];
-
-        });
-
-        return transformed;
-
-    });
-
-};  
+    return transformed;
+  });
+};

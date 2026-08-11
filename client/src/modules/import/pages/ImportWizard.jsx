@@ -12,6 +12,7 @@ import {
   // authorizeGoogleSheets,
   extractSpreadsheetId,
   fetchGoogleSheetData,
+  fetchGoogleSheetMetadata,
 } from "../services/googleSheetService";
 
 import { autoMapColumns } from "../utils/autoMapper";
@@ -52,6 +53,7 @@ export default function ImportWizard() {
 
   // Google Sheet
   const [sheetUrl, setSheetUrl] = useState("");
+  const [googleSheetMeta, setGoogleSheetMeta] = useState(null);
 
   // Common data
   const [rows, setRows] = useState([]);
@@ -87,7 +89,7 @@ export default function ImportWizard() {
 
     setMapping(autoMapping);
   };
-
+  const [sourceMeta, setSourceMeta] = useState(null);
   // --------------------------------------------------
   // EXCEL FILE SELECT
   // --------------------------------------------------
@@ -130,7 +132,6 @@ export default function ImportWizard() {
   // GOOGLE SHEET ID
   // --------------------------------------------------
 
-
   // --------------------------------------------------
   // NEXT
   // --------------------------------------------------
@@ -152,124 +153,114 @@ export default function ImportWizard() {
       return;
     }
 
-    
-   // STEP 1
-// Get Data
-if (activeStep === 1) {
+    // STEP 1
+    // Get Data
+    if (activeStep === 1) {
+      // Excel
+      if (importSource === "excel") {
+        if (!selectedFile) {
+          enqueueSnackbar("Please select an Excel file.", {
+            variant: "warning",
+          });
 
-  // Excel
-  if (importSource === "excel") {
-
-    if (!selectedFile) {
-      enqueueSnackbar("Please select an Excel file.", {
-        variant: "warning",
-      });
-
-      return;
-    }
-
-    setActiveStep(2);
-    return;
-  }
-
-  // Google Sheet
-  if (importSource === "google_sheet") {
-
-    const spreadsheetId =
-      extractSpreadsheetId(sheetUrl);
-
-    if (!spreadsheetId) {
-      enqueueSnackbar(
-        "Please enter a valid Google Sheet URL.",
-        {
-          variant: "warning",
+          return;
         }
-      );
 
-      return;
-    }
+        setActiveStep(2);
+        return;
+      }
 
-    if (!googleAccessToken) {
-      enqueueSnackbar(
-        "Please connect your Google account first.",
-        {
-          variant: "warning",
-        }
-      );
+      // Google Sheet
+      if (importSource === "google_sheet") {
+        const spreadsheetId = extractSpreadsheetId(sheetUrl);
 
-      return;
-    }
-
-    try {
-
-      const values =
-        await fetchGoogleSheetData({
+        const sheets = await fetchGoogleSheetMetadata({
           spreadsheetId,
           accessToken: googleAccessToken,
         });
 
-      console.log(
-        "GOOGLE SHEET DATA:",
-        values
-      );
+        console.log("GOOGLE SHEETS:", sheets);
 
-      const headers = values[0] || [];
-
-      const dataRows = values.slice(1);
-
-      const googleObjects = dataRows.map((row) => {
-
-        const obj = {};
-
-        headers.forEach((header, index) => {
-          obj[header] = row[index] ?? "";
+        const sheetName = sheets[0].sheetName;
+        setGoogleSheetMeta({
+          spreadsheetId,
+          sheetName,
         });
 
-        return obj;
-      });
+        if (!spreadsheetId) {
+          enqueueSnackbar("Please enter a valid Google Sheet URL.", {
+            variant: "warning",
+          });
 
-      const cleanedData =
-        cleanColumns(googleObjects);
-
-      setRows(cleanedData);
-
-      const fields =
-        await getImportFields();
-
-      setCrmFields(fields);
-
-      const googleColumns =
-        Object.keys(
-          cleanedData[0] || {}
-        );
-
-      const autoMapping =
-        autoMapColumns(
-          googleColumns,
-          fields
-        );
-
-      setMapping(autoMapping);
-
-      setActiveStep(2);
-      return;
-
-    } catch (error) {
-
-      console.error(error);
-
-      enqueueSnackbar(
-        error.message ||
-          "Failed to fetch Google Sheet.",
-        {
-          variant: "error",
+          return;
         }
-      );
 
-      return;
+        setSourceMeta({
+          source: "google_sheet",
+          spreadsheetId,
+            sheetName,
+        });
+
+        if (!googleAccessToken) {
+          enqueueSnackbar("Please connect your Google account first.", {
+            variant: "warning",
+          });
+
+          return;
+        }
+
+        try {
+          const values = await fetchGoogleSheetData({
+            spreadsheetId,
+            sheetName,
+            accessToken: googleAccessToken,
+          });
+
+          console.log("GOOGLE SHEET DATA:", values);
+
+          const headers = values[0] || [];
+
+          const dataRows = values.slice(1);
+
+          const googleObjects = dataRows.map((row, index) => {
+            const obj = {};
+
+            headers.forEach((header, columnIndex) => {
+              obj[header] = row[columnIndex] ?? "";
+            });
+
+            obj.__google_row = index + 2;
+
+            return obj;
+          });
+
+          const cleanedData = cleanColumns(googleObjects);
+
+          setRows(cleanedData);
+
+          const fields = await getImportFields();
+
+          setCrmFields(fields);
+
+          const googleColumns = Object.keys(cleanedData[0] || {});
+
+          const autoMapping = autoMapColumns(googleColumns, fields);
+
+          setMapping(autoMapping);
+
+          setActiveStep(2);
+          return;
+        } catch (error) {
+          console.error(error);
+
+          enqueueSnackbar(error.message || "Failed to fetch Google Sheet.", {
+            variant: "error",
+          });
+
+          return;
+        }
+      }
     }
-  }
-}
 
     // STEP 2
     // Mapping
@@ -342,7 +333,7 @@ if (activeStep === 1) {
     try {
       setImporting(true);
 
-      const result = await importCustomers(previewRows);
+      const result = await importCustomers(previewRows, sourceMeta);
 
       console.log(result);
 

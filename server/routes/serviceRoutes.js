@@ -13,45 +13,37 @@ const {
 router.get("/customer-code/:customerCode", async (req, res) => {
   try {
     const { customerCode } = req.params;
-    //  console.log("Customer Code:", customerCode);
 
     const result = await db.query(
       `
-     SELECT
-    id,
-    customer_code,
-    service_date,
-    service,
-    engineer,
-    remark,
-    amount,
-    received_amount,
-    pending_amount,
-    status,
-    'CRM' AS source
-FROM services
-WHERE customer_code = $1
+      SELECT
+        s.id,
+        s.customer_code,
+        s.service_date,
+        s.service,
+        s.engineer,
+        s.remark,
+        s.amount,
+        s.received_amount,
+        s.pending_amount,
+        s.status,
 
-UNION ALL
+        CASE
+          WHEN ces.service_id IS NOT NULL
+            AND ces.source_type = 'google_sheet'
+          THEN 'EXCEL'
+          ELSE 'CRM'
+        END AS source
 
-SELECT
-    id,
-    customer_code,
-    service_date,
-    service,
-    engineer,
-    remark,
-    amount,
+      FROM services s
 
-    0 AS received_amount,
-    0 AS pending_amount,
-    'Imported' AS status,
+      LEFT JOIN customer_external_sources ces
+        ON ces.service_id = s.id
+        AND ces.source_type = 'google_sheet'
 
-    'EXCEL' AS source
-FROM customers
-WHERE customer_code = $1
+      WHERE s.customer_code = $1
 
-ORDER BY service_date DESC;
+      ORDER BY s.service_date DESC, s.id DESC;
       `,
       [customerCode]
     );
@@ -59,15 +51,16 @@ ORDER BY service_date DESC;
     res.json(result.rows);
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error("Get customer services error:", error);
+    res.status(500).json({
+      message: "Server Error",
+    });
   }
 });
 
-
 router.get(
-    "/customer-summary/:customerCode",
-    getCustomerSummary
+  "/customer-summary/:customerCode",
+  getCustomerSummary
 );
 router.put("/:id", updateService);
 
