@@ -13,6 +13,7 @@ import {
   extractSpreadsheetId,
   fetchGoogleSheetData,
   fetchGoogleSheetMetadata,
+  syncGoogleSheet
 } from "../services/googleSheetService";
 
 import { autoMapColumns } from "../utils/autoMapper";
@@ -328,7 +329,7 @@ export default function ImportWizard() {
   // --------------------------------------------------
   // IMPORT
   // --------------------------------------------------
-
+console.log("SYNC/IMPORT PREVIEW ROW:", previewRows[0]);
   const handleImport = async () => {
     try {
       setImporting(true);
@@ -338,6 +339,7 @@ export default function ImportWizard() {
       console.log(result);
 
       setImportResult(result);
+      console.log("PREVIEW ROWS FOR SYNC:", previewRows);
 
       enqueueSnackbar("Import Completed", {
         variant: "success",
@@ -353,10 +355,77 @@ export default function ImportWizard() {
     }
   };
 
+
+  const handleGoogleSync = async () => {
+  try {
+    setImporting(true);
+
+    if (!sourceMeta?.spreadsheetId) {
+      enqueueSnackbar(
+        "Google Sheet information not available.",
+        {
+          variant: "warning",
+        }
+      );
+      return;
+    }
+
+    if (!sourceMeta?.sheetName) {
+      enqueueSnackbar(
+        "Google Sheet name not available.",
+        {
+          variant: "warning",
+        }
+      );
+      return;
+    }
+
+    const result = await syncGoogleSheet({
+      spreadsheetId: sourceMeta.spreadsheetId,
+      sheetName: sourceMeta.sheetName,
+      rows: previewRows,
+    });
+
+    console.log(
+      "GOOGLE SYNC RESULT:",
+      result
+    );
+
+    setImportResult(result);
+
+    enqueueSnackbar(
+      `Google Sync Completed — Updated: ${result.updated}, Skipped: ${result.skipped}`,
+      {
+        variant: "success",
+      }
+    );
+
+  } catch (error) {
+    console.error(
+      "GOOGLE SYNC ERROR:",
+      error
+    );
+
+    enqueueSnackbar(
+      error.message ||
+        "Google Sheet Sync Failed.",
+      {
+        variant: "error",
+      }
+    );
+
+  } finally {
+    setImporting(false);
+  }
+};
+
   // --------------------------------------------------
   // FINISH
   // --------------------------------------------------
 
+
+
+  
   const handleFinish = () => {
     navigate("/customers");
   };
@@ -482,6 +551,8 @@ export default function ImportWizard() {
             }
             importing={importing}
             onImport={handleImport}
+            onGoogleSync={handleGoogleSync}
+            importSource={importSource}
             importResult={importResult}
             onFinish={handleFinish}
           />

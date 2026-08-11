@@ -294,8 +294,146 @@ const getCustomerSummary = async (req, res) => {
     });
   }
 };
+
+
+const syncGoogleSheet = async (req, res) => {
+  try {
+    const {
+      spreadsheetId,
+      sheetName,
+      rows,
+    } = req.body;
+
+    if (!spreadsheetId) {
+      return res.status(400).json({
+        success: false,
+        message: "Spreadsheet ID is required.",
+      });
+    }
+
+    if (!sheetName) {
+      return res.status(400).json({
+        success: false,
+        message: "Sheet name is required.",
+      });
+    }
+
+    if (!Array.isArray(rows)) {
+      return res.status(400).json({
+        success: false,
+        message: "Rows must be an array.",
+      });
+    }
+
+    let updatedCount = 0;
+    let skippedCount = 0;
+    let failedCount = 0;
+
+    const errors = [];
+
+    for (const row of rows) {
+      try {
+        const googleRow = Number(row.__google_row);
+
+        // Google row number missing
+        if (!googleRow) {
+          skippedCount++;
+          continue;
+        }
+
+        // Find existing Google → CRM service mapping
+        const mappingResult = await db.query(
+          `
+          SELECT
+            customer_id,
+            service_id
+          FROM customer_external_sources
+          WHERE source_type = 'google_sheet'
+            AND external_id = $1
+            AND sheet_name = $2
+            AND external_row = $3
+          LIMIT 1
+          `,
+          [
+            spreadsheetId,
+            sheetName,
+            googleRow,
+          ]
+        );
+
+        // No mapping = don't create anything
+        if (mappingResult.rows.length === 0) {
+          skippedCount++;
+          continue;
+        }
+
+        const serviceId =
+          mappingResult.rows[0].service_id;
+
+        if (!serviceId) {
+          skippedCount++;
+          continue;
+        }
+
+        // Update existing service
+        await db.query(
+          `
+          UPDATE services
+          SET
+            service_date = $1,
+            service = $2,
+            engineer = $3,
+            remark = $4,
+            amount = $5
+          WHERE id = $6
+          `,
+          [
+            row.date || null,
+            row.date_of_instalation || null,
+            row.engineer || null,
+            row.remark || null,
+            Number(row.amount || 0),
+            serviceId,
+          ]
+        );
+
+        updatedCount++;
+
+      } catch (error) {
+        failedCount++;
+
+        errors.push({
+          google_row: row.__google_row || null,
+          error: error.message,
+        });
+      }
+    }
+
+    return res.json({
+      success: true,
+      total: rows.length,
+      updated: updatedCount,
+      skipped: skippedCount,
+      failed: failedCount,
+      errors,
+    });
+
+  } catch (error) {
+    console.error(
+      "Google Sheet Sync Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Google Sheet Sync Failed",
+    });
+  }
+};
+
 module.exports = {
   addService,
   updateService,
   getCustomerSummary,
+  syncGoogleSheet,
 };

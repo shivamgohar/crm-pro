@@ -13,8 +13,10 @@ export default function ImportStep({
   totalMappedFields,
   importing,
   onImport,
+  onGoogleSync,
   importResult,
   onFinish,
+  importSource,
 }) {
 
   // Import Complete Screen
@@ -106,6 +108,19 @@ export default function ImportStep({
       >
         {importing ? "Importing..." : "Start Import"}
       </Button>
+
+      {importSource === "google_sheet" && (
+  <Button
+    sx={{ mt: 2 }}
+    fullWidth
+    variant="outlined"
+    color="primary"
+    onClick={onGoogleSync}
+    disabled={importing}
+  >
+    {importing ? "Syncing..." : "Sync Google Sheet"}
+  </Button>
+)}
 
     </Paper>
   );

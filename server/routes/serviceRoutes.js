@@ -7,6 +7,7 @@ const {
   addService,
   getCustomerSummary,
   updateService,
+  syncGoogleSheet
 } = require("../controllers/serviceController");
 
 
@@ -62,6 +63,9 @@ router.get(
   "/customer-summary/:customerCode",
   getCustomerSummary
 );
+
+router.post("/google-sync", syncGoogleSheet);
+
 router.put("/:id", updateService);
 
 router.post("/", addService);

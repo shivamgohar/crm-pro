@@ -162,3 +162,55 @@ export const fetchGoogleSheetMetadata = async ({
     sheetName: sheet.properties.title,
   }));
 };
+
+
+
+// ==========================================
+// SYNC GOOGLE SHEET DATA
+// ==========================================
+
+export const syncGoogleSheet = async ({
+  spreadsheetId,
+  sheetName,
+  rows,
+}) => {
+  if (!spreadsheetId) {
+    throw new Error("Spreadsheet ID is required.");
+  }
+
+  if (!sheetName) {
+    throw new Error("Sheet name is required.");
+  }
+
+  if (!Array.isArray(rows)) {
+    throw new Error("Rows must be an array.");
+  }
+
+  const response = await fetch(
+    "http://localhost:5000/api/services/google-sync",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        spreadsheetId,
+        sheetName,
+        rows,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+        "Google Sheet sync failed."
+    );
+  }
+
+  return data;
+};
