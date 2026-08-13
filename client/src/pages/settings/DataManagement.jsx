@@ -15,6 +15,7 @@ import {
   Restore,
   CleaningServices,
     DeleteSweep,
+    Sync,
 } from "@mui/icons-material";
 
 import { useNavigate } from "react-router-dom";
@@ -60,6 +61,14 @@ function DataManagement() {
   description: "Remove previously imported customer data",
   icon: <DeleteSweep />,
   path: "/settings/data-management/clean-imported",
+  disabled: false,
+},
+
+{
+  title: "Google Sheet Sync",
+  description: "Sync existing Google Sheet data with CRM",
+  icon: <Sync fontSize="large" />,
+  path: "/settings/data-management/google-sync",
   disabled: false,
 },
 

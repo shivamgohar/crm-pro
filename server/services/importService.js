@@ -149,6 +149,84 @@ const saveDynamicFields = async (
 };
 
 // ==========================================
+// SAVE DYNAMIC SERVICE FIELDS
+// ==========================================
+const saveDynamicServiceFields = async (
+  serviceId,
+  row,
+  fieldMap
+) => {
+
+  if (!serviceId || !row) {
+    return;
+  }
+
+  for (const [fieldKey, fieldValue] of Object.entries(row)) {
+
+    if (fieldKey === "__google_row") {
+      continue;
+    }
+
+    const field = fieldMap[fieldKey];
+
+    if (!field) {
+      continue;
+    }
+
+    // Sirf service fields
+    if (field.field_group !== "service") {
+      continue;
+    }
+
+    // Core DB field hai
+    // Isko service_field_values me save nahi karna
+    if (field.storage_key) {
+      continue;
+    }
+
+    if (
+      fieldValue === undefined ||
+      fieldValue === null ||
+      fieldValue === ""
+    ) {
+      continue;
+    }
+
+    let value = String(fieldValue);
+
+    if (field.field_type === "date") {
+      value = convertExcelDate(fieldValue);
+    }
+
+    await db.query(
+      `
+      INSERT INTO service_field_values
+      (
+        service_id,
+        field_id,
+        field_value
+      )
+      VALUES
+      ($1, $2, $3)
+      ON CONFLICT (service_id, field_id)
+      DO UPDATE SET
+        field_value = EXCLUDED.field_value,
+        updated_at = CURRENT_TIMESTAMP
+      `,
+      [
+        serviceId,
+        field.id,
+        value,
+      ]
+    );
+  }
+};
+
+
+// ==========================================
+// SAVE IMPORTED SERVICE
+// ==========================================
+// ==========================================
 // SAVE IMPORTED SERVICE
 // ==========================================
 const saveImportedService = async ({
@@ -157,28 +235,126 @@ const saveImportedService = async ({
   sourceMeta,
 }) => {
 
-  const serviceDate = convertExcelDate(
-    row.date
-  );
+  if (!row) {
+    throw new Error("Import row is required");
+  }
 
-  const serviceName = String(
-    row.date_of_instalation || ""
-  ).trim();
-
-  const engineer = String(
-    row.engineer || ""
-  ).trim();
-
-  const remark = String(
-    row.remark || ""
-  ).trim();
-
-  const amount = Number(
-    row.amount || 0
-  );
 
   // ========================================
-  // GOOGLE SHEET → CHECK EXISTING ROW
+  // LOAD FIELD DEFINITIONS
+  // ========================================
+
+  const fieldKeys = Object.keys(row).filter(
+    (key) => key !== "__google_row"
+  );
+
+
+  const fieldsResult = await db.query(
+    `
+    SELECT
+      id,
+      field_key,
+      field_label,
+      field_type,
+      field_group,
+      storage_key,
+      is_visible
+    FROM company_customer_fields
+    WHERE field_key = ANY($1::text[])
+      AND is_visible = true
+    `,
+    [fieldKeys]
+  );
+
+
+  const fieldMap = {};
+
+  fieldsResult.rows.forEach((field) => {
+    fieldMap[field.field_key] = field;
+  });
+
+
+  // ========================================
+  // SERVICE CORE VALUES
+  // ========================================
+
+  const serviceValues = {};
+
+
+  for (const field of fieldsResult.rows) {
+
+    if (field.field_group !== "service") {
+      continue;
+    }
+
+    if (!field.storage_key) {
+      continue;
+    }
+
+    if (!row.hasOwnProperty(field.field_key)) {
+      continue;
+    }
+
+    const rawValue =
+      row[field.field_key];
+
+
+    if (
+      rawValue === undefined ||
+      rawValue === null ||
+      rawValue === ""
+    ) {
+      continue;
+    }
+
+
+    let value = rawValue;
+
+
+    // Date field
+    if (
+      field.field_type === "date" ||
+      field.storage_key === "service_date"
+    ) {
+
+      value = convertExcelDate(
+        rawValue
+      );
+
+    }
+
+
+    // Number field
+    if (
+      field.field_type === "number"
+    ) {
+
+      value = Number(rawValue);
+
+      if (Number.isNaN(value)) {
+        value = 0;
+      }
+
+    }
+
+
+    serviceValues[field.storage_key] =
+      value;
+  }
+
+
+  // ========================================
+  // AMOUNT
+  // ========================================
+
+  const amount =
+    serviceValues.amount !== undefined
+      ? Number(serviceValues.amount || 0)
+      : null;
+
+
+  // ========================================
+  // GOOGLE SHEET → EXISTING SERVICE
   // ========================================
 
   if (
@@ -207,6 +383,7 @@ const saveImportedService = async ({
         ]
       );
 
+
     // ======================================
     // EXISTING SERVICE → UPDATE
     // ======================================
@@ -219,13 +396,19 @@ const saveImportedService = async ({
       const serviceId =
         existingMapping.rows[0].service_id;
 
-      // Get existing payment information.
-      // We must NOT overwrite CRM payments.
+
+      // ====================================
+      // GET PAYMENT INFORMATION
+      // ====================================
+
       const existingService =
         await db.query(
           `
           SELECT
-            received_amount
+            received_amount,
+            amount,
+            pending_amount,
+            status
           FROM services
           WHERE id = $1
           LIMIT 1
@@ -233,75 +416,197 @@ const saveImportedService = async ({
           [serviceId]
         );
 
-      if (existingService.rows.length === 0) {
+
+      if (
+        existingService.rows.length === 0
+      ) {
         throw new Error(
           `Service ${serviceId} not found`
         );
       }
 
+
+      const existing =
+        existingService.rows[0];
+
+
       const receivedAmount =
         Number(
-          existingService.rows[0]
-            .received_amount || 0
+          existing.received_amount || 0
         );
 
-      // ====================================
-      // CALCULATE PAYMENT STATUS
-      // ====================================
 
-      let pendingAmount = 0;
-      let status = "Pending";
+      // Agar sheet me amount mapped hai
+      // tabhi payment calculation update karo
+      const finalAmount =
+        amount !== null
+          ? amount
+          : Number(existing.amount || 0);
 
-      if (amount > 0) {
 
-        pendingAmount = Math.max(
-          amount - receivedAmount,
-          0
+      let pendingAmount =
+        Number(
+          existing.pending_amount || 0
         );
 
-        if (receivedAmount >= amount) {
-          status = "Completed";
+
+      let status =
+        existing.status || "Pending";
+
+
+      if (amount !== null) {
+
+        if (finalAmount > 0) {
+
+          pendingAmount =
+            Math.max(
+              finalAmount -
+                receivedAmount,
+              0
+            );
+
+
+          status =
+            receivedAmount >=
+            finalAmount
+              ? "Completed"
+              : "Pending";
+
+        } else {
+
+          pendingAmount = 0;
+          status = "Pending";
+
         }
 
-      } else {
-
-        // Do not mark zero-value
-        // imported services as Completed.
-        pendingAmount = 0;
-        status = "Pending";
       }
 
+
       // ====================================
-      // UPDATE EXISTING SERVICE
+      // BUILD DYNAMIC UPDATE
       // ====================================
+
+      const updateFields = [];
+      const updateValues = [];
+
+      let parameterIndex = 1;
+
+
+      for (
+        const [
+          storageKey,
+          value
+        ]
+        of Object.entries(serviceValues)
+      ) {
+
+        // Security:
+        // storage_key sirf actual services
+        // table column hona chahiye
+        const columnCheck =
+          await db.query(
+            `
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'services'
+              AND column_name = $1
+            LIMIT 1
+            `,
+            [storageKey]
+          );
+
+
+        if (
+          columnCheck.rows.length === 0
+        ) {
+          continue;
+        }
+
+
+        updateFields.push(
+          `"${storageKey.replace(
+            /"/g,
+            '""'
+          )}" = $${parameterIndex}`
+        );
+
+
+        updateValues.push(value);
+
+        parameterIndex++;
+      }
+
+
+      // Customer code relationship
+      updateFields.push(
+        `customer_code = $${parameterIndex}`
+      );
+
+      updateValues.push(
+        customerCode
+      );
+
+      parameterIndex++;
+
+
+      // Payment fields
+      if (amount !== null) {
+
+        updateFields.push(
+          `pending_amount = $${parameterIndex}`
+        );
+
+        updateValues.push(
+          pendingAmount
+        );
+
+        parameterIndex++;
+
+
+        updateFields.push(
+          `status = $${parameterIndex}`
+        );
+
+        updateValues.push(
+          status
+        );
+
+        parameterIndex++;
+      }
+
+
+      updateFields.push(
+        "updated_at = CURRENT_TIMESTAMP"
+      );
+
+
+      updateValues.push(
+        serviceId
+      );
+
 
       await db.query(
         `
         UPDATE services
         SET
-          service_date = $1,
-          service = $2,
-          engineer = $3,
-          remark = $4,
-          amount = $5,
-          customer_code = $6,
-          pending_amount = $7,
-          status = $8,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = $9
+          ${updateFields.join(", ")}
+        WHERE id = $${parameterIndex}
         `,
-        [
-          serviceDate || null,
-          serviceName,
-          engineer,
-          remark,
-          amount,
-          customerCode,
-          pendingAmount,
-          status,
-          serviceId,
-        ]
+        updateValues
       );
+
+
+      // ====================================
+      // SAVE CUSTOM SERVICE FIELDS
+      // ====================================
+
+      await saveDynamicServiceFields(
+        serviceId,
+        row,
+        fieldMap
+      );
+
 
       console.log(
         "Google Service Updated:",
@@ -311,7 +616,8 @@ const saveImportedService = async ({
 
           serviceId,
 
-          amount,
+          amount:
+            finalAmount,
 
           receivedAmount,
 
@@ -321,6 +627,7 @@ const saveImportedService = async ({
         }
       );
 
+
       return {
         serviceId,
         created: false,
@@ -329,54 +636,396 @@ const saveImportedService = async ({
     }
   }
 
+// ========================================
+// LEGACY SERVICE DUPLICATE CHECK
+// ========================================
+// Google mapping nahi mili to check karo ki
+// same customer ka purana imported service
+// already exist karta hai ya nahi.
+//
+// Typical case:
+// Old imported record:
+//   service = ""
+//
+// Google Sheet:
+//   service = "Home Cleaning"
+//
+// Baaki fields same hain.
+// Aise case me NEW service create nahi karna.
+// Existing service ko update + Google mapping karna hai.
+
+if (
+  sourceMeta?.source === "google_sheet" &&
+  sourceMeta?.spreadsheetId &&
+  row.__google_row
+) {
+
+  const legacyServiceResult =
+    await db.query(
+      `
+      SELECT
+        id,
+        service,
+        service_date,
+        engineer,
+        amount,
+        remark,
+        received_amount,
+        pending_amount,
+        status
+      FROM services
+      WHERE customer_code = $1
+        AND COALESCE(service, '') = ''
+        AND COALESCE(engineer, '') = $2
+        AND COALESCE(remark, '') = $3
+        AND COALESCE(amount, 0) = $4
+        AND (
+          service_date = $5
+          OR (
+            service_date IS NULL
+            AND $5 IS NULL
+          )
+        )
+      ORDER BY id ASC
+      LIMIT 1
+      `,
+      [
+        customerCode,
+        String(row.engineer || "").trim(),
+        String(row.remark || "").trim(),
+        amount !== null ? amount : 0,
+        serviceValues.service_date || null,
+      ]
+    );
+
+  if (legacyServiceResult.rows.length > 0) {
+
+    const legacyService =
+      legacyServiceResult.rows[0];
+
+    const serviceId =
+      legacyService.id;
+
+    // ====================================
+    // BUILD UPDATE
+    // ====================================
+
+    const updateFields = [];
+    const updateValues = [];
+
+    let parameterIndex = 1;
+
+    for (
+      const [
+        storageKey,
+        value
+      ] of Object.entries(serviceValues)
+    ) {
+
+      const columnCheck =
+        await db.query(
+          `
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'services'
+            AND column_name = $1
+          LIMIT 1
+          `,
+          [storageKey]
+        );
+
+      if (
+        columnCheck.rows.length === 0
+      ) {
+        continue;
+      }
+
+      updateFields.push(
+        `"${storageKey.replace(
+          /"/g,
+          '""'
+        )}" = $${parameterIndex}`
+      );
+
+      updateValues.push(value);
+
+      parameterIndex++;
+    }
+
+    // Customer relationship
+    updateFields.push(
+      `customer_code = $${parameterIndex}`
+    );
+
+    updateValues.push(
+      customerCode
+    );
+
+    parameterIndex++;
+
+    // ====================================
+    // PAYMENT CALCULATION
+    // ====================================
+
+    if (amount !== null) {
+
+      const receivedAmount =
+        Number(
+          legacyService.received_amount || 0
+        );
+
+      const finalAmount =
+        Number(amount);
+
+      const pendingAmount =
+        Math.max(
+          finalAmount - receivedAmount,
+          0
+        );
+
+      const status =
+        receivedAmount >= finalAmount &&
+        finalAmount > 0
+          ? "Completed"
+          : "Pending";
+
+      updateFields.push(
+        `pending_amount = $${parameterIndex}`
+      );
+
+      updateValues.push(
+        pendingAmount
+      );
+
+      parameterIndex++;
+
+      updateFields.push(
+        `status = $${parameterIndex}`
+      );
+
+      updateValues.push(
+        status
+      );
+
+      parameterIndex++;
+    }
+
+    updateFields.push(
+      "updated_at = CURRENT_TIMESTAMP"
+    );
+
+    updateValues.push(
+      serviceId
+    );
+
+    await db.query(
+      `
+      UPDATE services
+      SET
+        ${updateFields.join(", ")}
+      WHERE id = $${parameterIndex}
+      `,
+      updateValues
+    );
+
+    // ====================================
+    // SAVE DYNAMIC SERVICE FIELDS
+    // ====================================
+
+    await saveDynamicServiceFields(
+      serviceId,
+      row,
+      fieldMap
+    );
+
+    console.log(
+      "LEGACY SERVICE REUSED:",
+      {
+        googleRow:
+          row.__google_row,
+
+        serviceId,
+
+        customerCode,
+
+        service:
+          serviceValues.service,
+
+        amount,
+      }
+    );
+
+    return {
+      serviceId,
+      created: false,
+      updated: true,
+      reusedLegacy: true,
+    };
+  }
+}
+
+
+
   // ========================================
   // NEW SERVICE → INSERT
   // ========================================
+
+  const coreColumns = [];
+  const coreValues = [];
+  const placeholders = [];
+
+
+  let parameterIndex = 1;
+
+
+  for (
+    const [
+      storageKey,
+      value
+    ]
+    of Object.entries(serviceValues)
+  ) {
+
+    const columnCheck =
+      await db.query(
+        `
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'services'
+          AND column_name = $1
+        LIMIT 1
+        `,
+        [storageKey]
+      );
+
+
+    if (
+      columnCheck.rows.length === 0
+    ) {
+      continue;
+    }
+
+
+    coreColumns.push(
+      `"${storageKey.replace(
+        /"/g,
+        '""'
+      )}"`
+    );
+
+
+    coreValues.push(value);
+
+
+    placeholders.push(
+      `$${parameterIndex}`
+    );
+
+
+    parameterIndex++;
+  }
+
+
+  // Customer relationship
+  coreColumns.push(
+    "customer_code"
+  );
+
+  coreValues.push(
+    customerCode
+  );
+
+  placeholders.push(
+    `$${parameterIndex}`
+  );
+
+  parameterIndex++;
+
+
+  // ========================================
+// PAYMENT DEFAULTS
+// ========================================
+
+// received_amount
+coreColumns.push(
+  "received_amount"
+);
+
+coreValues.push(0);
+
+placeholders.push(
+  `$${parameterIndex}`
+);
+
+parameterIndex++;
+
+
+// pending_amount
+coreColumns.push(
+  "pending_amount"
+);
+
+coreValues.push(
+  amount !== null
+    ? Math.max(amount, 0)
+    : 0
+);
+
+placeholders.push(
+  `$${parameterIndex}`
+);
+
+parameterIndex++;
+
+
+// status
+coreColumns.push(
+  "status"
+);
+
+coreValues.push(
+  "Pending"
+);
+
+placeholders.push(
+  `$${parameterIndex}`
+);
+
+parameterIndex++;
 
   const serviceResult =
     await db.query(
       `
       INSERT INTO services
       (
-        service_date,
-        service,
-        engineer,
-        remark,
-        amount,
-        customer_code,
-        received_amount,
-        pending_amount,
-        status
+        ${coreColumns.join(", ")}
       )
       VALUES
       (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        0,
-        CASE
-          WHEN $5 > 0 THEN $5
-          ELSE 0
-        END,
-        'Pending'
+        ${placeholders.join(", ")}
       )
       RETURNING id
       `,
-      [
-        serviceDate || null,
-        serviceName,
-        engineer,
-        remark,
-        amount,
-        customerCode,
-      ]
+      coreValues
     );
+
 
   const serviceId =
     serviceResult.rows[0].id;
+
+
+  // ========================================
+  // SAVE CUSTOM SERVICE FIELDS
+  // ========================================
+
+  await saveDynamicServiceFields(
+    serviceId,
+    row,
+    fieldMap
+  );
+
 
   console.log(
     "Google Service Created:",
@@ -386,9 +1035,13 @@ const saveImportedService = async ({
 
       serviceId,
 
-      amount,
+      amount:
+        amount !== null
+          ? amount
+          : 0,
     }
   );
+
 
   return {
     serviceId,
@@ -400,11 +1053,11 @@ const saveImportedService = async ({
 // IMPORT CUSTOMERS
 // ==========================================
 
+
 const importCustomersService = async (
   rows,
   sourceMeta = null
 ) => {
-
   let importedCount = 0;
   let updatedCount = 0;
   let skippedCount = 0;
@@ -413,37 +1066,84 @@ const importCustomersService = async (
   const errors = [];
 
   // ========================================
+  // HELPER: FIND VALUE FROM DIFFERENT
+  // COLUMN NAME VARIATIONS
+  // ========================================
+
+  const getRowValue = (row, possibleKeys) => {
+    if (!row || typeof row !== "object") {
+      return null;
+    }
+
+    // 1. Direct match first
+    for (const key of possibleKeys) {
+      if (
+        row[key] !== undefined &&
+        row[key] !== null &&
+        String(row[key]).trim() !== ""
+      ) {
+        return row[key];
+      }
+    }
+
+    // 2. Case/space-insensitive match
+    const normalizedKeys = Object.keys(row);
+
+    for (const possibleKey of possibleKeys) {
+      const target = String(possibleKey)
+        .trim()
+        .toLowerCase();
+
+      const foundKey = normalizedKeys.find(
+        (actualKey) =>
+          String(actualKey)
+            .trim()
+            .toLowerCase() === target
+      );
+
+      if (
+        foundKey &&
+        row[foundKey] !== undefined &&
+        row[foundKey] !== null &&
+        String(row[foundKey]).trim() !== ""
+      ) {
+        return row[foundKey];
+      }
+    }
+
+    return null;
+  };
+
+  // ========================================
   // CREATE IMPORT BATCH
   // ========================================
 
-  const batchResult =
-    await db.query(
-      `
-      INSERT INTO import_batches
-      (
-        source,
-        file_name,
-        total_rows
-      )
-      VALUES
-      (
-        $1,
-        $2,
-        $3
-      )
-      RETURNING id
-      `,
-      [
-        sourceMeta?.source || "excel",
+  const batchResult = await db.query(
+    `
+    INSERT INTO import_batches
+    (
+      source,
+      file_name,
+      total_rows
+    )
+    VALUES
+    (
+      $1,
+      $2,
+      $3
+    )
+    RETURNING id
+    `,
+    [
+      sourceMeta?.source || "excel",
 
-        sourceMeta?.source ===
-        "google_sheet"
-          ? "Google Sheet Import"
-          : "Excel Import",
+      sourceMeta?.source === "google_sheet"
+        ? "Google Sheet Import"
+        : "Excel Import",
 
-        rows.length,
-      ]
-    );
+      rows.length,
+    ]
+  );
 
   const importBatchId =
     batchResult.rows[0].id;
@@ -474,20 +1174,120 @@ const importCustomersService = async (
 
   const fieldMap = {};
 
-  companyFields.rows.forEach(
-    (field) => {
-      fieldMap[field.field_key] =
-        field.id;
-    }
-  );
+  companyFields.rows.forEach((field) => {
+    fieldMap[field.field_key] = field.id;
+  });
 
   // ========================================
   // PROCESS ROWS
   // ========================================
 
-  for (const row of rows) {
-
+  for (const originalRow of rows) {
     try {
+
+      // ====================================
+      // NORMALIZE CUSTOMER DATA
+      // ====================================
+
+      const row = {
+        ...originalRow,
+
+        customer_code:
+          getRowValue(
+            originalRow,
+            [
+              "customer_code",
+              "Customer ID",
+              "customer id",
+              "Customer Code",
+              "customer code",
+            ]
+          ),
+
+        customer_name:
+          getRowValue(
+            originalRow,
+            [
+              "customer_name",
+              "Customer Name",
+              "customer name",
+              "Name",
+              "Customer",
+            ]
+          ),
+
+        phone:
+          getRowValue(
+            originalRow,
+            [
+              "phone",
+              "Phone",
+              "Contact",
+              "contact",
+              "Mobile",
+              "mobile",
+            ]
+          ),
+
+        location:
+          getRowValue(
+            originalRow,
+            [
+              "location",
+              "Location",
+              "Address",
+              "address",
+            ]
+          ),
+      };
+
+      console.log(
+        "========================================"
+      );
+
+      console.log(
+        "GOOGLE/IMPORT ORIGINAL ROW:",
+        originalRow
+      );
+
+      console.log(
+        "NORMALIZED CUSTOMER:",
+        {
+          customer_code:
+            row.customer_code,
+
+          customer_name:
+            row.customer_name,
+
+          phone:
+            row.phone,
+
+          location:
+            row.location,
+
+          google_row:
+            row.__google_row,
+        }
+      );
+
+      // ====================================
+      // CUSTOMER NAME VALIDATION
+      // ====================================
+
+      if (
+        row.customer_name === null ||
+        row.customer_name === undefined ||
+        String(row.customer_name)
+          .trim() === ""
+      ) {
+        throw new Error(
+          "Customer name is missing."
+        );
+      }
+
+      // ====================================
+      // CUSTOMER CODE
+      // ====================================
 
       let customerCode =
         String(
@@ -514,8 +1314,7 @@ const importCustomersService = async (
           );
 
         if (
-          existingCustomer.rows.length >
-          0
+          existingCustomer.rows.length > 0
         ) {
           customerId =
             existingCustomer.rows[0].id;
@@ -554,8 +1353,7 @@ const importCustomersService = async (
             );
 
           if (
-            existingCustomer.rows.length >
-            0
+            existingCustomer.rows.length > 0
           ) {
 
             customerId =
@@ -574,8 +1372,6 @@ const importCustomersService = async (
 
       if (!customerId) {
 
-        // Generate code ONLY when
-        // actually creating a customer
         if (!customerCode) {
           customerCode =
             await generateIdentifier();
@@ -605,13 +1401,17 @@ const importCustomersService = async (
             RETURNING id
             `,
             [
-              row.customer_name,
+              String(
+                row.customer_name
+              ).trim(),
 
               String(
                 row.phone || ""
-              ),
+              ).trim(),
 
-              row.location || "",
+              String(
+                row.location || ""
+              ).trim(),
 
               customerCode,
 
@@ -626,6 +1426,15 @@ const importCustomersService = async (
           customer.rows[0].id;
 
         importedCount++;
+
+        console.log(
+          "CUSTOMER CREATED:",
+          {
+            customerId,
+            customerCode,
+            name: row.customer_name,
+          }
+        );
 
       } else {
 
@@ -643,19 +1452,32 @@ const importCustomersService = async (
           WHERE id = $4
           `,
           [
-            row.customer_name,
+            String(
+              row.customer_name
+            ).trim(),
 
             String(
               row.phone || ""
-            ),
+            ).trim(),
 
-            row.location || "",
+            String(
+              row.location || ""
+            ).trim(),
 
             customerId,
           ]
         );
 
         updatedCount++;
+
+        console.log(
+          "CUSTOMER UPDATED:",
+          {
+            customerId,
+            customerCode,
+            name: row.customer_name,
+          }
+        );
       }
 
       // ====================================
@@ -686,6 +1508,10 @@ const importCustomersService = async (
 
           googleRow:
             row.__google_row,
+
+          customerId,
+
+          customerCode,
         }
       );
 
@@ -708,6 +1534,11 @@ const importCustomersService = async (
             row,
             sourceMeta,
           });
+
+        console.log(
+          "GOOGLE SERVICE RESULT:",
+          serviceResult
+        );
       }
 
       // ====================================
@@ -759,6 +1590,18 @@ const importCustomersService = async (
               "Sheet1",
           ]
         );
+
+        console.log(
+          "GOOGLE SOURCE LINK CREATED:",
+          {
+            customerId,
+            serviceId:
+              serviceResult?.serviceId ||
+              null,
+            googleRow:
+              row.__google_row,
+          }
+        );
       }
 
     } catch (error) {
@@ -766,22 +1609,68 @@ const importCustomersService = async (
       failedCount++;
 
       console.error(
-        "Customer:",
-        row.customer_code ||
-          row.customer_name
+        "========================================"
       );
 
       console.error(
+        "IMPORT ROW FAILED"
+      );
+
+      console.error(
+        "Google Row:",
+        originalRow?.__google_row
+      );
+
+      console.error(
+        "Customer:",
+        getRowValue(
+          originalRow,
+          [
+            "customer_name",
+            "Customer Name",
+            "customer name",
+            "Name",
+            "Customer",
+          ]
+        )
+      );
+
+      console.error(
+        "Error:",
         error.message
+      );
+
+      console.error(
+        "========================================"
       );
 
       errors.push({
         customer_code:
-          row.customer_code ||
-          null,
+          getRowValue(
+            originalRow,
+            [
+              "customer_code",
+              "Customer ID",
+              "Customer Code",
+              "customer code",
+            ]
+          ),
 
         customer_name:
-          row.customer_name,
+          getRowValue(
+            originalRow,
+            [
+              "customer_name",
+              "Customer Name",
+              "customer name",
+              "Name",
+              "Customer",
+            ]
+          ),
+
+        google_row:
+          originalRow?.__google_row ||
+          null,
 
         error:
           error.message,
@@ -794,7 +1683,6 @@ const importCustomersService = async (
   // ========================================
 
   return {
-
     success: true,
 
     total: rows.length,
@@ -803,12 +1691,13 @@ const importCustomersService = async (
 
     updated: updatedCount,
 
+    skipped: skippedCount,
+
     failed: failedCount,
 
     errors,
   };
 };
-
 // ==========================================
 // EXPORTS
 // ==========================================

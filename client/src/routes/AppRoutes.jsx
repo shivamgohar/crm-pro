@@ -21,6 +21,7 @@ import ForgotPassword from "../pages/ForgotPassword";
 import Users from "../pages/settings/Users";
 import CleanImportedData from "../pages/settings/CleanImportedData";
 import Trash from "../pages/settings/Trash";
+import GoogleSheetSync from "../pages/settings/GoogleSheetSync";
 
 // import ImportWizard from "../modules/shared/import/pages/ImportWizard";
 
@@ -154,6 +155,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <CleanImportedData />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/data-management/google-sync"
+        element={
+          <ProtectedRoute>
+            <GoogleSheetSync />
           </ProtectedRoute>
         }
       />

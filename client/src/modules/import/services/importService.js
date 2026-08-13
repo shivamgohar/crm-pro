@@ -27,3 +27,41 @@ export const importCustomers = async (rows, sourceMeta = null) => {
 
   return response.data;
 };
+
+
+export const saveGoogleSheetMapping = async ({
+    spreadsheetId,
+    sheetName,
+    mapping,
+}) => {
+
+    const response = await api.post(
+        "/services/google-mapping",
+        {
+            spreadsheetId,
+            sheetName,
+            mapping,
+        }
+    );
+
+    return response.data;
+};
+
+
+export const getGoogleSheetMapping = async ({
+    spreadsheetId,
+    sheetName,
+}) => {
+
+    const response = await api.get(
+        "/services/google-mapping",
+        {
+            params: {
+                spreadsheetId,
+                sheetName,
+            },
+        }
+    );
+
+    return response.data;
+};

@@ -104,7 +104,7 @@ useEffect(() => {
 
        <AppHeader
   title="Customers"
-  subtitle={`${pagination.totalItems || 0} Customers`}
+  subtitle={`${pagination.totalRecords || 0} Customers`}
   actions={
     <AppButton
       startIcon={<AddIcon />}

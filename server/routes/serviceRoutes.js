@@ -10,6 +10,11 @@ const {
   syncGoogleSheet
 } = require("../controllers/serviceController");
 
+const {
+    saveGoogleSheetMapping,
+    getGoogleSheetMapping,
+} = require("../controllers/googleSheetController");
+
 
 router.get("/customer-code/:customerCode", async (req, res) => {
   try {
@@ -65,6 +70,16 @@ router.get(
 );
 
 router.post("/google-sync", syncGoogleSheet);
+
+router.post(
+    "/google-mapping",
+    saveGoogleSheetMapping
+);
+
+router.get(
+    "/google-mapping",
+    getGoogleSheetMapping
+);
 
 router.put("/:id", updateService);
 

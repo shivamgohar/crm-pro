@@ -6,14 +6,19 @@ import MappingStep from "../components/MappingStep";
 import ImportStep from "../components/ImportStep";
 import GoogleSheetStep from "../components/GoogleSheetStep";
 
-import { getImportFields, importCustomers } from "../services/importService";
+import {
+  getImportFields,
+  importCustomers,
+  saveGoogleSheetMapping,
+  getGoogleSheetMapping,
+} from "../services/importService";
 
 import {
   // authorizeGoogleSheets,
   extractSpreadsheetId,
   fetchGoogleSheetData,
   fetchGoogleSheetMetadata,
-  syncGoogleSheet
+  syncGoogleSheet,
 } from "../services/googleSheetService";
 
 import { autoMapColumns } from "../utils/autoMapper";
@@ -199,7 +204,7 @@ export default function ImportWizard() {
         setSourceMeta({
           source: "google_sheet",
           spreadsheetId,
-            sheetName,
+          sheetName,
         });
 
         if (!googleAccessToken) {
@@ -245,9 +250,23 @@ export default function ImportWizard() {
 
           const googleColumns = Object.keys(cleanedData[0] || {});
 
-          const autoMapping = autoMapColumns(googleColumns, fields);
+          const savedMappingResponse = await getGoogleSheetMapping({
+            spreadsheetId,
+            sheetName,
+          });
 
-          setMapping(autoMapping);
+          if (savedMappingResponse?.mapping?.mapping) {
+            console.log(
+              "SAVED GOOGLE SHEET MAPPING:",
+              savedMappingResponse.mapping.mapping,
+            );
+
+            setMapping(savedMappingResponse.mapping.mapping);
+          } else {
+            const autoMapping = autoMapColumns(googleColumns, fields);
+
+            setMapping(autoMapping);
+          }
 
           setActiveStep(2);
           return;
@@ -265,48 +284,167 @@ export default function ImportWizard() {
 
     // STEP 2
     // Mapping
-    if (activeStep === 2) {
-      const mappedFields = Object.values(mapping).filter(
-        (value) => value !== "",
-      );
+    // if (activeStep === 2) {
+    //   const mappedFields = Object.values(mapping).filter(
+    //     (value) => value !== "",
+    //   );
 
-      if (mappedFields.length === 0) {
-        enqueueSnackbar("Please map at least one column.", {
-          variant: "warning",
-        });
+    //   if (mappedFields.length === 0) {
+    //     enqueueSnackbar("Please map at least one column.", {
+    //       variant: "warning",
+    //     });
 
-        return;
+    //     return;
+    //   }
+
+    //   const requiredFields = crmFields.filter((field) => field.is_required);
+
+    //   const missingFields = requiredFields.filter(
+    //     (field) => !Object.values(mapping).includes(field.field_key),
+    //   );
+
+    //   if (missingFields.length > 0) {
+    //     enqueueSnackbar(
+    //       `Please map required field(s): ${missingFields
+    //         .map((field) => field.field_label)
+    //         .join(", ")}`,
+    //       {
+    //         variant: "warning",
+    //       },
+    //     );
+
+    //     return;
+    //   }
+
+    //   const transformed = transformRows(rows, mapping);
+
+    //   setPreviewRows(transformed);
+
+    //   console.log("Preview Data:", transformed);
+
+    //   setActiveStep(3);
+
+    //   return;
+    // }
+
+    // STEP 2
+// Mapping
+if (activeStep === 2) {
+  const mappedFields = Object.values(mapping).filter(
+    (value) => value !== "",
+  );
+
+  if (mappedFields.length === 0) {
+    enqueueSnackbar("Please map at least one column.", {
+      variant: "warning",
+    });
+
+    return;
+  }
+
+  const requiredFields = crmFields.filter(
+    (field) => field.is_required
+  );
+
+  const missingFields = requiredFields.filter(
+    (field) =>
+      !Object.values(mapping).includes(field.field_key)
+  );
+
+  if (missingFields.length > 0) {
+    enqueueSnackbar(
+      `Please map required field(s): ${missingFields
+        .map((field) => field.field_label)
+        .join(", ")}`,
+      {
+        variant: "warning",
       }
+    );
 
-      const requiredFields = crmFields.filter((field) => field.is_required);
+    return;
+  }
 
-      const missingFields = requiredFields.filter(
-        (field) => !Object.values(mapping).includes(field.field_key),
-      );
+  // ========================================
+  // SAVE GOOGLE SHEET MAPPING
+  // ========================================
 
-      if (missingFields.length > 0) {
+  if (importSource === "google_sheet") {
+    try {
+      if (!sourceMeta?.spreadsheetId) {
         enqueueSnackbar(
-          `Please map required field(s): ${missingFields
-            .map((field) => field.field_label)
-            .join(", ")}`,
+          "Google Sheet information not available.",
           {
-            variant: "warning",
-          },
+            variant: "error",
+          }
         );
 
         return;
       }
 
-      const transformed = transformRows(rows, mapping);
+      if (!sourceMeta?.sheetName) {
+        enqueueSnackbar(
+          "Google Sheet name not available.",
+          {
+            variant: "error",
+          }
+        );
 
-      setPreviewRows(transformed);
+        return;
+      }
 
-      console.log("Preview Data:", transformed);
+      await saveGoogleSheetMapping({
+        spreadsheetId: sourceMeta.spreadsheetId,
+        sheetName: sourceMeta.sheetName,
+        mapping,
+      });
 
-      setActiveStep(3);
+      console.log(
+        "GOOGLE SHEET MAPPING SAVED:",
+        {
+          spreadsheetId: sourceMeta.spreadsheetId,
+          sheetName: sourceMeta.sheetName,
+          mapping,
+        }
+      );
+
+    } catch (error) {
+      console.error(
+        "Failed to save Google Sheet mapping:",
+        error
+      );
+
+      enqueueSnackbar(
+        error.message ||
+          "Failed to save Google Sheet mapping.",
+        {
+          variant: "error",
+        }
+      );
 
       return;
     }
+  }
+
+  // ========================================
+  // TRANSFORM DATA
+  // ========================================
+
+  const transformed = transformRows(
+    rows,
+    mapping
+  );
+
+  setPreviewRows(transformed);
+
+  console.log(
+    "Preview Data:",
+    transformed
+  );
+
+  setActiveStep(3);
+
+  return;
+}
 
     // STEP 3
     // Preview
@@ -329,10 +467,18 @@ export default function ImportWizard() {
   // --------------------------------------------------
   // IMPORT
   // --------------------------------------------------
-console.log("SYNC/IMPORT PREVIEW ROW:", previewRows[0]);
+  console.log("SYNC/IMPORT PREVIEW ROW:", previewRows[0]);
   const handleImport = async () => {
     try {
       setImporting(true);
+
+      if (importSource === "google_sheet") {
+        await saveGoogleSheetMapping({
+          spreadsheetId: sourceMeta.spreadsheetId,
+          sheetName: sourceMeta.sheetName,
+          mapping,
+        });
+      }
 
       const result = await importCustomers(previewRows, sourceMeta);
 
@@ -355,77 +501,55 @@ console.log("SYNC/IMPORT PREVIEW ROW:", previewRows[0]);
     }
   };
 
-
   const handleGoogleSync = async () => {
-  try {
-    setImporting(true);
+    try {
+      setImporting(true);
 
-    if (!sourceMeta?.spreadsheetId) {
-      enqueueSnackbar(
-        "Google Sheet information not available.",
-        {
+      if (!sourceMeta?.spreadsheetId) {
+        enqueueSnackbar("Google Sheet information not available.", {
           variant: "warning",
-        }
-      );
-      return;
-    }
-
-    if (!sourceMeta?.sheetName) {
-      enqueueSnackbar(
-        "Google Sheet name not available.",
-        {
-          variant: "warning",
-        }
-      );
-      return;
-    }
-
-    const result = await syncGoogleSheet({
-      spreadsheetId: sourceMeta.spreadsheetId,
-      sheetName: sourceMeta.sheetName,
-      rows: previewRows,
-    });
-
-    console.log(
-      "GOOGLE SYNC RESULT:",
-      result
-    );
-
-    setImportResult(result);
-
-    enqueueSnackbar(
-      `Google Sync Completed — Updated: ${result.updated}, Skipped: ${result.skipped}`,
-      {
-        variant: "success",
+        });
+        return;
       }
-    );
 
-  } catch (error) {
-    console.error(
-      "GOOGLE SYNC ERROR:",
-      error
-    );
+      if (!sourceMeta?.sheetName) {
+        enqueueSnackbar("Google Sheet name not available.", {
+          variant: "warning",
+        });
+        return;
+      }
 
-    enqueueSnackbar(
-      error.message ||
-        "Google Sheet Sync Failed.",
-      {
+      const result = await syncGoogleSheet({
+        spreadsheetId: sourceMeta.spreadsheetId,
+        sheetName: sourceMeta.sheetName,
+        rows: previewRows,
+      });
+
+      console.log("GOOGLE SYNC RESULT:", result);
+
+      setImportResult(result);
+
+      enqueueSnackbar(
+        `Google Sync Completed — Updated: ${result.updated}, Skipped: ${result.skipped}`,
+        {
+          variant: "success",
+        },
+      );
+    } catch (error) {
+      console.error("GOOGLE SYNC ERROR:", error);
+
+      enqueueSnackbar(error.message || "Google Sheet Sync Failed.", {
         variant: "error",
-      }
-    );
-
-  } finally {
-    setImporting(false);
-  }
-};
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
 
   // --------------------------------------------------
   // FINISH
   // --------------------------------------------------
 
-
-
-  
   const handleFinish = () => {
     navigate("/customers");
   };

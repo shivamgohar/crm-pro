@@ -1,12 +1,13 @@
-// Google Sheets API
+// ==========================================
+// CONFIG
+// ==========================================
+
 const GOOGLE_SHEETS_API =
   "https://sheets.googleapis.com/v4/spreadsheets";
 
-// Google OAuth Client ID
 const GOOGLE_CLIENT_ID =
-  "321108326322-4jku06kh3u967nq7j6bc6h6m4n3mickd.apps.googleusercontent.com";
+  import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-// Google Sheets permission
 const GOOGLE_SHEETS_SCOPE =
   "https://www.googleapis.com/auth/spreadsheets";
 
@@ -15,13 +16,23 @@ const GOOGLE_SHEETS_SCOPE =
 // GOOGLE AUTHORIZATION
 // ==========================================
 
-export const authorizeGoogleSheets = () => {
+export const authorizeGoogleSheets = (prompt = "") => {
   return new Promise((resolve, reject) => {
+
+    if (!GOOGLE_CLIENT_ID) {
+      reject(
+        new Error(
+          "Google Client ID is not configured. Check client/.env"
+        )
+      );
+
+      return;
+    }
 
     if (!window.google?.accounts?.oauth2) {
       reject(
         new Error(
-          "Google Identity Services not loaded"
+          "Google Identity Services not loaded. Please refresh the page and try again."
         )
       );
 
@@ -30,25 +41,70 @@ export const authorizeGoogleSheets = () => {
 
     const client =
       window.google.accounts.oauth2.initTokenClient({
+
         client_id: GOOGLE_CLIENT_ID,
 
         scope: GOOGLE_SHEETS_SCOPE,
 
+        include_granted_scopes: true,
+
         callback: (response) => {
 
           if (response.error) {
-            reject(response);
+
+            console.error(
+              "Google OAuth error:",
+              response
+            );
+
+            reject(
+              new Error(
+                response.error_description ||
+                response.error ||
+                "Google authorization failed."
+              )
+            );
+
+            return;
+          }
+
+          if (!response.access_token) {
+            reject(
+              new Error(
+                "Google did not return an access token."
+              )
+            );
+
             return;
           }
 
           resolve(response.access_token);
         },
+
       });
 
-    client.requestAccessToken();
+   client.requestAccessToken({
+  prompt,
+});
+
   });
 };
 
+
+
+// ==========================================
+// ENSURE GOOGLE ACCESS TOKEN
+// ==========================================
+
+export const ensureGoogleAccessToken = async (
+  currentToken
+) => {
+  if (currentToken) {
+    return currentToken;
+  }
+
+  return await authorizeGoogleSheets();
+};
 
 // ==========================================
 // EXTRACT SPREADSHEET ID
@@ -61,7 +117,7 @@ export const extractSpreadsheetId = (url) => {
   }
 
   const match = url.match(
-    /spreadsheets\/d\/([a-zA-Z0-9-_]+)/
+    /\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/
   );
 
   return match ? match[1] : null;
@@ -73,6 +129,115 @@ export const extractSpreadsheetId = (url) => {
 // ==========================================
 
 export const fetchGoogleSheetData = async ({
+  spreadsheetId,
+  accessToken,
+  sheetName = "Sheet1",
+  onTokenRefreshed,
+}) => {
+
+  if (!spreadsheetId) {
+    throw new Error(
+      "Spreadsheet ID is required."
+    );
+  }
+
+  if (!accessToken) {
+    throw new Error(
+      "Google access token is required."
+    );
+  }
+
+  const range = `${sheetName}!A:ZZ`;
+
+  const makeRequest = async (token) => {
+    return fetch(
+      `${GOOGLE_SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(
+        range
+      )}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  };
+
+  let response = await makeRequest(accessToken);
+
+  // ==========================================
+  // GOOGLE TOKEN EXPIRED
+  // ==========================================
+
+ if (response.status === 401) {
+  console.log("GOOGLE TOKEN EXPIRED - REFRESHING TOKEN");
+
+  try {
+    const newAccessToken =
+      await authorizeGoogleSheets("none");
+
+    try {
+      const savedConnection =
+        localStorage.getItem("google_sheet_connection");
+
+      if (savedConnection) {
+        const connection =
+          JSON.parse(savedConnection);
+
+        connection.accessToken =
+          newAccessToken;
+
+        localStorage.setItem(
+          "google_sheet_connection",
+          JSON.stringify(connection)
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Failed to save refreshed Google token:",
+        error
+      );
+    }
+
+    if (onTokenRefreshed) {
+      onTokenRefreshed(newAccessToken);
+    }
+
+    response = await makeRequest(newAccessToken);
+
+  } catch (error) {
+    const tokenError =
+      new Error("Google authorization expired. Reconnect required.");
+
+    tokenError.code =
+      "GOOGLE_RECONNECT_REQUIRED";
+
+    throw tokenError;
+  }
+}
+
+  if (!response.ok) {
+
+    const error = await response
+      .json()
+      .catch(() => ({}));
+
+    throw new Error(
+      error?.error?.message ||
+      "Failed to fetch Google Sheet."
+    );
+  }
+
+  const data =
+    await response.json();
+
+  return data.values || [];
+};
+
+// ==========================================
+// FETCH GOOGLE SHEET METADATA
+// ==========================================
+
+export const fetchGoogleSheetMetadata = async ({
   spreadsheetId,
   accessToken,
 }) => {
@@ -90,48 +255,6 @@ export const fetchGoogleSheetData = async ({
   }
 
   const response = await fetch(
-    `${GOOGLE_SHEETS_API}/${spreadsheetId}/values/A:ZZ`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  );
-
-  if (!response.ok) {
-
-    const error =
-      await response.json().catch(
-        () => ({})
-      );
-
-    throw new Error(
-      error?.error?.message ||
-      "Failed to fetch Google Sheet."
-    );
-  }
-
-  const data =
-    await response.json();
-
-  return data.values || [];
-};
-
-
-
-export const fetchGoogleSheetMetadata = async ({
-  spreadsheetId,
-  accessToken,
-}) => {
-  if (!spreadsheetId) {
-    throw new Error("Spreadsheet ID is required.");
-  }
-
-  if (!accessToken) {
-    throw new Error("Google access token is required.");
-  }
-
-  const response = await fetch(
     `${GOOGLE_SHEETS_API}/${spreadsheetId}?fields=sheets(properties(sheetId,title))`,
     {
       headers: {
@@ -141,11 +264,14 @@ export const fetchGoogleSheetMetadata = async ({
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+
+    const error = await response
+      .json()
+      .catch(() => ({}));
 
     throw new Error(
       error?.error?.message ||
-        "Failed to fetch Google Sheet metadata."
+      "Failed to fetch Google Sheet metadata."
     );
   }
 
@@ -154,7 +280,9 @@ export const fetchGoogleSheetMetadata = async ({
   const sheets = data.sheets || [];
 
   if (sheets.length === 0) {
-    throw new Error("No sheets found in this Google Spreadsheet.");
+    throw new Error(
+      "No sheets found in this Google Spreadsheet."
+    );
   }
 
   return sheets.map((sheet) => ({
@@ -162,7 +290,6 @@ export const fetchGoogleSheetMetadata = async ({
     sheetName: sheet.properties.title,
   }));
 };
-
 
 
 // ==========================================
@@ -174,20 +301,31 @@ export const syncGoogleSheet = async ({
   sheetName,
   rows,
 }) => {
+
   if (!spreadsheetId) {
-    throw new Error("Spreadsheet ID is required.");
+    throw new Error(
+      "Spreadsheet ID is required."
+    );
   }
 
   if (!sheetName) {
-    throw new Error("Sheet name is required.");
+    throw new Error(
+      "Sheet name is required."
+    );
   }
 
   if (!Array.isArray(rows)) {
-    throw new Error("Rows must be an array.");
+    throw new Error(
+      "Rows must be an array."
+    );
   }
 
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000/api";
+
   const response = await fetch(
-    "http://localhost:5000/api/services/google-sync",
+    `${apiUrl}/services/google-sync`,
     {
       method: "POST",
 
@@ -203,12 +341,14 @@ export const syncGoogleSheet = async ({
     }
   );
 
-  const data = await response.json();
+  const data = await response
+    .json()
+    .catch(() => ({}));
 
   if (!response.ok) {
     throw new Error(
       data?.message ||
-        "Google Sheet sync failed."
+      "Google Sheet sync failed."
     );
   }
 
