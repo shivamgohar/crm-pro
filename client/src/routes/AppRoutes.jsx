@@ -22,6 +22,7 @@ import Users from "../pages/settings/Users";
 import CleanImportedData from "../pages/settings/CleanImportedData";
 import Trash from "../pages/settings/Trash";
 import GoogleSheetSync from "../pages/settings/GoogleSheetSync";
+import FieldManagement from "../pages/settings/FieldManagement";
 
 // import ImportWizard from "../modules/shared/import/pages/ImportWizard";
 
@@ -114,6 +115,14 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/settings/field-management"
+        element={
+          <ProtectedRoute>
+            <FieldManagement />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/settings/customer-fields"
         element={

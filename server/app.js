@@ -14,6 +14,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const companyFieldRoutes = require("./routes/companyFieldRoutes");
 const companyStatusRoutes = require("./routes/companyStatusRoutes");
+const customFieldRoutes = require("./routes/customFieldRoutes");
 const app = express();
 
 app.use(cors());
@@ -44,7 +45,6 @@ app.use(authRoutes);
 app.use("/api/protected-actions", protectedActionRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-// app.use("/products", productRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reports", reportRoutes);
@@ -54,6 +54,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/company/customer-fields", companyFieldRoutes);
 app.use("/api/company/customer-status", companyStatusRoutes);
+app.use("/api/custom-fields", customFieldRoutes);
 
 
 

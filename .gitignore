@@ -33,3 +33,11 @@ Thumbs.db
 *.bak
 *.backup
 CRM-CURRENT-CHECK.txt
+
+
+# Local database/reference dumps
+crm_database_full.txt
+crm_database_schema*.txt
+
+# Local Git/debug output
+git-output.txt

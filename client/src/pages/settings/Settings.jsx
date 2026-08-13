@@ -15,6 +15,7 @@ import {
   ManageAccounts,
   Security,
   Palette,
+  Tune,
 } from "@mui/icons-material";
 
 import { useNavigate } from "react-router-dom";
@@ -30,6 +31,14 @@ function Settings() {
       path: "/settings/company",
       disabled: true,
     },
+{
+  title: "Field Management",
+  description: "Manage custom fields across CRM modules",
+  icon: <Tune fontSize="large" />,
+  path: "/settings/field-management",
+  disabled: false,
+},
+
     {
       title: "Customer Fields",
       description: "Manage customer fields",
