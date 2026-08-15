@@ -15,8 +15,11 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import {
   getProfileCustomerFields,
-  // getListCustomerFields,
 } from "../services/customerFieldService";
+
+import {
+  getCustomFields,
+} from "../services/customFieldService";
 
 
 import {
@@ -103,32 +106,47 @@ const handleEditService = (service) => {
 };
 
 
-// const loadProfileFields = async () => {
+
+
+// const loadFields = async () => {
 //   try {
 //     const data = await getProfileCustomerFields();
-//     setProfileFields(data);
+
+//     setProfileFields(
+//       data.filter((field) => field.field_group === "customer")
+//     );
+
+//     setServiceFields(
+//       data.filter((field) => field.field_group === "service")
+//     );
+
 //   } catch (error) {
 //     console.error(error);
 //   }
 // };
 
-
 const loadFields = async () => {
   try {
-    const data = await getProfileCustomerFields();
+    // NEW system — Customer fields
+    const customerFields = await getCustomFields("customer");
 
-    setProfileFields(
-      data.filter((field) => field.field_group === "customer")
-    );
+    setProfileFields(customerFields || []);
+
+    // OLD system — Service fields
+    const oldFields = await getProfileCustomerFields();
 
     setServiceFields(
-      data.filter((field) => field.field_group === "service")
+      oldFields.filter(
+        (field) => field.field_group === "service"
+      )
     );
 
   } catch (error) {
-    console.error(error);
+    console.error("Load profile fields error:", error);
   }
 };
+
+
 
 useEffect(() => {
   fetchCustomer();

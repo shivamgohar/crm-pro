@@ -25,6 +25,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import RestoreIcon from "@mui/icons-material/Restore";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import { useNavigate } from "react-router-dom";
+import AppBreadcrumb from "../../components/ui/AppBreadcrumb";
 
 import {
   getCustomFields,
@@ -274,6 +276,19 @@ function FieldManagement() {
   return (
 
     <Box>
+
+      <AppBreadcrumb
+  items={[
+    {
+      label: "Settings",
+      path: "/settings",
+    },
+    {
+      label: "Field Management",
+    },
+  ]}
+/>
+
 
       {/* =========================
           Header

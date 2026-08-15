@@ -17,8 +17,8 @@ server/uploads/
 *.log
 logs/
 
-# Local database / seed data
-database/seed.sql
+# Local database backups
+database/backups/
 
 # OS files
 .DS_Store
@@ -33,7 +33,6 @@ Thumbs.db
 *.bak
 *.backup
 CRM-CURRENT-CHECK.txt
-
 
 # Local database/reference dumps
 crm_database_full.txt

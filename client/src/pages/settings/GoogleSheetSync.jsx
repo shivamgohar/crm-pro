@@ -12,6 +12,8 @@ import {
   Chip,
   Divider,
   Stack,
+  Switch,
+FormControlLabel,
 } from "@mui/material";
 
 // import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -26,6 +28,7 @@ import {
   extractSpreadsheetId,
   fetchGoogleSheetMetadata,
   fetchGoogleSheetData,
+  pushCrmToGoogleSheet,
 } from "../../modules/import/services/googleSheetService";
 
 import { getGoogleSheetMapping } from "../../modules/import/services/importService";
@@ -46,6 +49,18 @@ function GoogleSheetSync() {
   const [syncResult, setSyncResult] = useState(null);
   const [lastSynced, setLastSynced] = useState(null);
   const [syncStatus, setSyncStatus] = useState("connected");
+  // const [syncMode, setSyncMode] = useState("both");
+
+  const [syncMode, setSyncMode] = useState(
+    localStorage.getItem("google_sync_mode") || "two_way",
+  );
+
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+
+  const changeSyncMode = (mode) => {
+    setSyncMode(mode);
+    localStorage.setItem("google_sync_mode", mode);
+  };
 
   const isConnected = spreadsheetId && accessToken && sheets.length > 0;
 
@@ -212,99 +227,354 @@ function GoogleSheetSync() {
     }
   };
 
-  useEffect(() => {
-    if (!isConnected) {
-      return;
+  const handlePushToGoogle = async () => {
+    try {
+      setSyncing(true);
+      setError("");
+      setSyncResult(null);
+
+      const response = await pushCrmToGoogleSheet({
+        spreadsheetId,
+        sheetName: selectedSheet,
+        accessToken,
+      });
+
+      console.log("CRM → GOOGLE RESULT:", response);
+
+      setSyncResult(response);
+    } catch (error) {
+      console.error("CRM → Google sync failed:", error);
+
+      setError(error.message || "CRM to Google Sheet sync failed.");
+    } finally {
+      setSyncing(false);
     }
+  };
 
-    let cancelled = false;
+  const handleSyncBoth = async () => {
+    try {
+      setSyncing(true);
+      setError("");
+      setSyncResult(null);
 
-    const autoSync = async () => {
-      try {
-        if (fetching || syncing) {
-          return;
-        }
+      // Google → CRM
+      await handleSync();
 
-        console.log("GOOGLE AUTO SYNC CHECK");
+      // CRM → Google
+      await handlePushToGoogle();
+    } catch (error) {
+      console.error("Two-way sync failed:", error);
 
-        const rawRows = await fetchGoogleSheetData({
-          spreadsheetId,
-          accessToken,
-          sheetName: selectedSheet,
+      setError(error.message || "Two-way sync failed.");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
-          onTokenRefreshed: (newAccessToken) => {
-            setAccessToken(newAccessToken);
-          },
-        });
+useEffect(() => {
+  if (!isConnected) {
+    return;
+  }
 
-        if (rawRows.length < 2) {
-          return;
-        }
+  // ==========================================
+  // AUTO SYNC OFF
+  // ==========================================
 
-        const headers = rawRows[0];
+  if (!autoSyncEnabled) {
+    console.log("GOOGLE AUTO SYNC: OFF");
+    return;
+  }
 
-        const formattedRows = rawRows.slice(1).map((row, index) => {
-          const formatted = {};
+  let cancelled = false;
 
-          headers.forEach((header, columnIndex) => {
-            formatted[header] = row[columnIndex] ?? "";
+  // ==========================================
+  // AUTO SYNC FUNCTION
+  // ==========================================
+
+  const autoSync = async () => {
+    try {
+      if (fetching || syncing) {
+        return;
+      }
+
+      console.log(
+        "GOOGLE AUTO SYNC CHECK:",
+        syncMode
+      );
+
+      // ========================================
+      // CRM → GOOGLE
+      // ========================================
+
+      if (syncMode === "crm_to_google") {
+
+        console.log(
+          "CRM → GOOGLE AUTO SYNC START"
+        );
+
+        const response =
+          await pushCrmToGoogleSheet({
+            spreadsheetId,
+            sheetName: selectedSheet,
+            accessToken,
           });
 
-          formatted.__google_row = index + 2;
+        if (!cancelled) {
 
-          return formatted;
-        });
+          console.log(
+            "CRM → GOOGLE AUTO SYNC RESULT:",
+            response
+          );
 
-        const mappingResponse = await getGoogleSheetMapping({
-          spreadsheetId,
-          sheetName: selectedSheet,
-        });
+          setLastSynced(
+            new Date()
+          );
 
-        const savedMapping = mappingResponse?.mapping?.mapping;
+          setSyncStatus(
+            "connected"
+          );
+        }
 
-        if (!savedMapping || Object.keys(savedMapping).length === 0) {
-          console.log("AUTO SYNC: No mapping found");
+        return;
+      }
+
+      // ========================================
+      // GOOGLE → CRM
+      // ========================================
+
+      if (
+        syncMode === "google_to_crm" ||
+        syncMode === "two_way"
+      ) {
+
+        console.log(
+          "GOOGLE → CRM AUTO SYNC START"
+        );
+
+        const rawRows =
+          await fetchGoogleSheetData({
+            spreadsheetId,
+            accessToken,
+            sheetName: selectedSheet,
+
+            onTokenRefreshed:
+              (newAccessToken) => {
+                setAccessToken(
+                  newAccessToken
+                );
+              },
+          });
+
+        if (rawRows.length < 2) {
+          console.log(
+            "GOOGLE AUTO SYNC: No data rows"
+          );
 
           return;
         }
 
-        const syncRows = transformRows(formattedRows, savedMapping);
+        const headers =
+          rawRows[0];
 
-        const response = await api.post("/services/google-sync", {
-          spreadsheetId,
-          sheetName: selectedSheet,
-          rows: syncRows,
-        });
+        const formattedRows =
+          rawRows
+            .slice(1)
+            .map(
+              (row, index) => {
+
+                const formatted = {};
+
+                headers.forEach(
+                  (
+                    header,
+                    columnIndex
+                  ) => {
+
+                    formatted[header] =
+                      row[columnIndex] ??
+                      "";
+                  }
+                );
+
+                formatted.__google_row =
+                  index + 2;
+
+                return formatted;
+              }
+            );
+
+        // ======================================
+        // LOAD SAVED MAPPING
+        // ======================================
+
+        const mappingResponse =
+          await getGoogleSheetMapping({
+            spreadsheetId,
+            sheetName:
+              selectedSheet,
+          });
+
+        const savedMapping =
+          mappingResponse
+            ?.mapping
+            ?.mapping;
+
+        if (
+          !savedMapping ||
+          Object.keys(savedMapping)
+            .length === 0
+        ) {
+
+          console.log(
+            "AUTO SYNC: No mapping found"
+          );
+
+          return;
+        }
+
+        // ======================================
+        // TRANSFORM GOOGLE DATA
+        // ======================================
+
+        const syncRows =
+          transformRows(
+            formattedRows,
+            savedMapping
+          );
+
+        // ======================================
+        // GOOGLE → CRM
+        // ======================================
+
+        const response =
+          await api.post(
+            "/services/google-sync",
+            {
+              spreadsheetId,
+              sheetName:
+                selectedSheet,
+              rows: syncRows,
+            }
+          );
 
         if (!cancelled) {
-          console.log("GOOGLE AUTO SYNC RESULT:", response.data);
-          setLastSynced(new Date());
-          setSyncStatus("connected");
+
+          console.log(
+            "GOOGLE → CRM AUTO SYNC RESULT:",
+            response.data
+          );
+
+          setLastSynced(
+            new Date()
+          );
+
+          setSyncStatus(
+            "connected"
+          );
         }
-  } catch (error) {
-  if (!cancelled) {
-    console.error("Google Auto Sync failed:", error);
 
-    if (error.code === "GOOGLE_RECONNECT_REQUIRED") {
-      setSyncStatus("reconnect");
-    } else {
-      setSyncStatus("error");
+        // ======================================
+        // TWO WAY
+        // ======================================
+
+        if (
+          syncMode === "two_way"
+        ) {
+
+          console.log(
+            "TWO-WAY AUTO SYNC: CRM → GOOGLE START"
+          );
+
+          const pushResponse =
+            await pushCrmToGoogleSheet({
+              spreadsheetId,
+              sheetName: selectedSheet,
+              accessToken,
+            });
+
+          if (!cancelled) {
+
+            console.log(
+              "TWO-WAY AUTO SYNC CRM → GOOGLE RESULT:",
+              pushResponse
+            );
+
+            setLastSynced(
+              new Date()
+            );
+
+            setSyncStatus(
+              "connected"
+            );
+          }
+        }
+      }
+
+    } catch (error) {
+
+      if (!cancelled) {
+
+        console.error(
+          "Google Auto Sync failed:",
+          error
+        );
+
+        if (
+          error.code ===
+          "GOOGLE_RECONNECT_REQUIRED"
+        ) {
+
+          setSyncStatus(
+            "reconnect"
+          );
+
+        } else {
+
+          setSyncStatus(
+            "error"
+          );
+        }
+      }
     }
-  }
-}
-    };
+  };
 
-    // First sync immediately
-    autoSync();
+  // ==========================================
+  // FIRST SYNC IMMEDIATELY
+  // ==========================================
 
-    // Then every 1 minute
-    const intervalId = setInterval(autoSync, 60 * 1000);
+  autoSync();
 
-    return () => {
-      cancelled = true;
-      clearInterval(intervalId);
-    };
-  }, [isConnected, spreadsheetId, accessToken, selectedSheet]);
+  // ==========================================
+  // EVERY 1 MINUTE
+  // ==========================================
+
+  const intervalId =
+    setInterval(
+      autoSync,
+      60 * 1000
+    );
+
+  // ==========================================
+  // CLEANUP
+  // ==========================================
+
+  return () => {
+
+    cancelled = true;
+
+    clearInterval(
+      intervalId
+    );
+  };
+
+}, [
+  isConnected,
+  spreadsheetId,
+  accessToken,
+  selectedSheet,
+  syncMode,
+  autoSyncEnabled,
+]);
 
   return (
     <Box>
@@ -534,48 +804,282 @@ function GoogleSheetSync() {
                   ACTION BUTTONS
               ================================= */}
 
-              <Stack
-                direction={{
-                  xs: "column",
-                  sm: "row",
-                }}
-                spacing={2}
-                sx={{ mt: 2.5 }}
-              >
-                <Button
-                  variant="outlined"
-                  onClick={handleFetchData}
-                  disabled={
-                    !spreadsheetId || !accessToken || !selectedSheet || fetching
-                  }
-                  startIcon={<RefreshOutlinedIcon />}
-                  sx={{
-                    minWidth: 190,
-                    height: 42,
-                    borderRadius: 2,
-                    textTransform: "none",
-                    fontWeight: 600,
-                  }}
-                >
-                  {fetching ? "Fetching..." : "Fetch Latest Data"}
-                </Button>
+              <Stack spacing={2.5} sx={{ mt: 2.5 }}>
+                {/* ========================================= */}
+                {/* SYNC MODE */}
+                {/* ========================================= */}
 
-                <Button
-                  variant="contained"
-                  color="success"
-                  onClick={handleSync}
-                  disabled={rows.length === 0 || syncing}
-                  startIcon={<CloudSyncOutlinedIcon />}
+                <Box
                   sx={{
-                    minWidth: 160,
-                    height: 42,
-                    borderRadius: 2,
-                    textTransform: "none",
-                    fontWeight: 600,
+                    border: "1px solid #e5e7eb",
+                    borderRadius: 3,
+                    backgroundColor: "#fafafa",
+                    p: 2,
                   }}
                 >
-                  {syncing ? "Syncing..." : "Sync Changes"}
-                </Button>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 2,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Box>
+                      <Typography
+                        sx={{
+                          fontSize: 15,
+                          fontWeight: 700,
+                          color: "#111827",
+                        }}
+                      >
+                        Sync Mode
+                      </Typography>
+
+                      <Typography
+                        sx={{
+                          fontSize: 12,
+                          color: "#6b7280",
+                          mt: 0.4,
+                        }}
+                      >
+                        Select how CRM and Google Sheet should synchronize
+                      </Typography>
+                    </Box>
+
+                    {/* AUTO SYNC */}
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        px: 1.5,
+                        py: 0.7,
+                        borderRadius: 2,
+                        backgroundColor: autoSyncEnabled
+                          ? "#ecfdf5"
+                          : "#f3f4f6",
+                        border: "1px solid",
+                        borderColor: autoSyncEnabled ? "#86efac" : "#d1d5db",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={autoSyncEnabled}
+                        onChange={(e) => setAutoSyncEnabled(e.target.checked)}
+                        style={{
+                          width: 16,
+                          height: 16,
+                          cursor: "pointer",
+                        }}
+                      />
+
+                      <Typography
+                        sx={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: autoSyncEnabled ? "#15803d" : "#6b7280",
+                        }}
+                      >
+                        Auto Sync
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* MODE BUTTONS */}
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 1,
+                      mt: 2,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Button
+                      onClick={() => changeSyncMode("google_to_crm")}
+                      variant={
+                        syncMode === "google_to_crm" ? "contained" : "outlined"
+                      }
+                      color="success"
+                      sx={{
+                        minWidth: 150,
+                        height: 40,
+                        borderRadius: 2,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        boxShadow: "none",
+                      }}
+                    >
+                      Google → CRM
+                    </Button>
+
+                    <Button
+                      onClick={() => changeSyncMode("crm_to_google")}
+                      variant={
+                        syncMode === "crm_to_google" ? "contained" : "outlined"
+                      }
+                      sx={{
+                        minWidth: 150,
+                        height: 40,
+                        borderRadius: 2,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        boxShadow: "none",
+                      }}
+                    >
+                      CRM → Google
+                    </Button>
+
+                    <Button
+                      onClick={() => changeSyncMode("two_way")}
+                      variant={
+                        syncMode === "two_way" ? "contained" : "outlined"
+                      }
+                      sx={{
+                        minWidth: 150,
+                        height: 40,
+                        borderRadius: 2,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        boxShadow: "none",
+                      }}
+                    >
+                      CRM ↔ Google
+                    </Button>
+                  </Box>
+
+                  {/* CURRENT MODE */}
+
+                  <Box
+                    sx={{
+                      mt: 1.5,
+                      px: 1.5,
+                      py: 1,
+                      borderRadius: 2,
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #e5e7eb",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        color: "#6b7280",
+                      }}
+                    >
+                      <strong>Current Mode:</strong>{" "}
+                      {syncMode === "google_to_crm"
+                        ? "Google → CRM"
+                        : syncMode === "crm_to_google"
+                          ? "CRM → Google"
+                          : "CRM ↔ Google"}
+                      {"  •  "}
+                      <strong>Auto Sync:</strong>{" "}
+                      {autoSyncEnabled ? "ON" : "OFF"}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* ========================================= */}
+                {/* SYNC ACTIONS */}
+                {/* ========================================= */}
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1.5,
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                  }}
+                >
+                  {/* FETCH */}
+
+                  <Button
+                    variant="outlined"
+                    onClick={handleFetchData}
+                    disabled={
+                      !spreadsheetId ||
+                      !accessToken ||
+                      !selectedSheet ||
+                      fetching
+                    }
+                    startIcon={<RefreshOutlinedIcon />}
+                    sx={{
+                      minWidth: 175,
+                      height: 44,
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {fetching ? "Fetching..." : "Fetch Latest Data"}
+                  </Button>
+
+                  {/* GOOGLE → CRM */}
+
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={handleSync}
+                    disabled={syncing}
+                    startIcon={<CloudSyncOutlinedIcon />}
+                    sx={{
+                      minWidth: 155,
+                      height: 44,
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      boxShadow: "none",
+                    }}
+                  >
+                    {syncing ? "Syncing..." : "Google → CRM"}
+                  </Button>
+
+                  {/* CRM → GOOGLE */}
+
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handlePushToGoogle}
+                    disabled={syncing}
+                    startIcon={<CloudSyncOutlinedIcon />}
+                    sx={{
+                      minWidth: 155,
+                      height: 44,
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      boxShadow: "none",
+                    }}
+                  >
+                    {syncing ? "Syncing..." : "CRM → Google"}
+                  </Button>
+
+                  {/* TWO WAY */}
+
+                  <Button
+                    variant="contained"
+                    onClick={handleSyncBoth}
+                    disabled={syncing}
+                    startIcon={<CloudSyncOutlinedIcon />}
+                    sx={{
+                      minWidth: 155,
+                      height: 44,
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      backgroundColor: "#111827",
+                      "&:hover": {
+                        backgroundColor: "#1f2937",
+                      },
+                      boxShadow: "none",
+                    }}
+                  >
+                    {syncing ? "Syncing..." : "CRM ↔ Google"}
+                  </Button>
+                </Box>
               </Stack>
             </Box>
           </>

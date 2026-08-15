@@ -7,7 +7,8 @@ const {
   addService,
   getCustomerSummary,
   updateService,
-  syncGoogleSheet
+  syncGoogleSheet,
+  pushCrmToGoogleSheet,
 } = require("../controllers/serviceController");
 
 const {
@@ -79,6 +80,11 @@ router.post(
 router.get(
     "/google-mapping",
     getGoogleSheetMapping
+);
+
+router.post(
+  "/google-push",
+  pushCrmToGoogleSheet
 );
 
 router.put("/:id", updateService);

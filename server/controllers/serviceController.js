@@ -4,6 +4,10 @@ const {
   getFieldsByKeys,
 } = require("../services/fieldResolver");
 
+const { google } = require("googleapis");
+
+
+
 const saveDynamicServiceFields = async (
   serviceId,
   row
@@ -613,10 +617,10 @@ const syncGoogleSheet = async (req, res) => {
 
 
         // ======================================
-// GOOGLE ROW → CRM ROW MAPPING
-// ======================================
+        // GOOGLE ROW → CRM ROW MAPPING
+        // ======================================
 
-const crmRow = row;
+        const crmRow = row;
 
         // ======================================
         // FIND GOOGLE → CRM LINK
@@ -1217,10 +1221,823 @@ const crmRow = row;
   }
 };
 
+
+const resolveCrmFieldValue = ({
+  fieldKey,
+  customer,
+  service,
+  customFields,
+}) => {
+  if (!fieldKey) {
+    return "";
+  }
+
+  // -----------------------------------------
+  // CUSTOMER DATA
+  // -----------------------------------------
+
+  if (customer) {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        customer,
+        fieldKey
+      )
+    ) {
+      return customer[fieldKey] ?? "";
+    }
+
+    // CRM form ka logical customer_name
+    // customers table me actual column "name" hai
+    if (
+      fieldKey === "customer_name" &&
+      Object.prototype.hasOwnProperty.call(
+        customer,
+        "name"
+      )
+    ) {
+      return customer.name ?? "";
+    }
+  }
+
+  // -----------------------------------------
+  // SERVICE DATA
+  // -----------------------------------------
+
+  if (service) {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        service,
+        fieldKey
+      )
+    ) {
+      return service[fieldKey] ?? "";
+    }
+  }
+
+  // -----------------------------------------
+  // CUSTOM FIELD DATA
+  // -----------------------------------------
+
+  if (
+    customFields &&
+    Object.prototype.hasOwnProperty.call(
+      customFields,
+      fieldKey
+    )
+  ) {
+    return customFields[fieldKey] ?? "";
+  }
+
+  return "";
+};
+
+const getGoogleColumnLetter = (number) => {
+  let result = "";
+
+  while (number > 0) {
+    const remainder =
+      (number - 1) % 26;
+
+    result =
+      String.fromCharCode(
+        65 + remainder
+      ) + result;
+
+    number =
+      Math.floor(
+        (number - 1) / 26
+      );
+  }
+
+  return result;
+};
+
+const pushCrmToGoogleSheet = async (req, res) => {
+  try {
+    const {
+      spreadsheetId,
+      sheetName,
+      accessToken,
+    } = req.body;
+
+    // ==========================================
+    // VALIDATION
+    // ==========================================
+
+    if (!spreadsheetId || !sheetName || !accessToken) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Spreadsheet ID, sheet name and access token are required.",
+      });
+    }
+
+    // ==========================================
+    // LOAD SAVED MAPPING
+    // ==========================================
+
+const mappingResult = await db.query(
+  `
+  SELECT export_mapping
+  FROM google_sheet_mappings
+  WHERE spreadsheet_id = $1
+    AND sheet_name = $2
+  LIMIT 1
+  `,
+  [spreadsheetId, sheetName]
+);
+
+    if (mappingResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No mapping found for this Google Sheet.",
+      });
+    }
+
+  const googleMapping =
+  mappingResult.rows[0].export_mapping || {};
+
+    const mappingEntries =
+      Object.entries(googleMapping);
+
+    if (mappingEntries.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Google Sheet mapping is empty.",
+      });
+    }
+
+    // ==========================================
+    // GET GOOGLE ↔ CRM LINKS
+    // ==========================================
+
+    const linksResult = await db.query(
+      `
+      SELECT
+        ces.id,
+        ces.customer_id,
+        ces.service_id,
+        ces.external_row
+      FROM customer_external_sources ces
+      WHERE ces.source_type = 'google_sheet'
+        AND ces.external_id = $1
+        AND ces.sheet_name = $2
+        AND ces.external_row IS NOT NULL
+      ORDER BY ces.external_row ASC
+      `,
+      [spreadsheetId, sheetName]
+    );
+
+    const links = linksResult.rows;
+
+    if (links.length === 0) {
+      return res.json({
+        success: true,
+        message: "No linked Google Sheet rows found.",
+        total: 0,
+        updated: 0,
+        skipped: 0,
+      });
+    }
+
+    // ==========================================
+    // GOOGLE AUTH
+    // ==========================================
+
+    const auth = new google.auth.OAuth2();
+
+    auth.setCredentials({
+      access_token: accessToken,
+    });
+
+    const sheets = google.sheets({
+      version: "v4",
+      auth,
+    });
+
+    // ==========================================
+    // PREPARE BATCH DATA
+    // ==========================================
+
+    const batchData = [];
+    const preparedRows = [];
+
+    let skipped = 0;
+
+    for (const link of links) {
+
+      // ----------------------------------------
+      // CUSTOMER
+      // ----------------------------------------
+
+      const customerResult = await db.query(
+        `
+        SELECT *
+        FROM customers
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [link.customer_id]
+      );
+
+      if (customerResult.rows.length === 0) {
+        skipped++;
+        continue;
+      }
+
+      const customer =
+        customerResult.rows[0];
+
+      // ----------------------------------------
+      // SERVICE
+      // ----------------------------------------
+
+      let service = null;
+
+      if (link.service_id) {
+        const serviceResult = await db.query(
+          `
+          SELECT *
+          FROM services
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [link.service_id]
+        );
+
+        if (serviceResult.rows.length > 0) {
+          service =
+            serviceResult.rows[0];
+        }
+      }
+
+      // ----------------------------------------
+      // CUSTOM FIELDS
+      // ----------------------------------------
+
+      const customFields = {};
+
+      const customResult = await db.query(
+        `
+        SELECT
+          cf.field_key,
+          cfv.field_value
+        FROM custom_field_values cfv
+        JOIN custom_fields cf
+          ON cf.id = cfv.field_id
+        WHERE cfv.record_id = $1
+        `,
+        [link.customer_id]
+      );
+
+      customResult.rows.forEach((field) => {
+        customFields[field.field_key] =
+          field.field_value;
+      });
+
+      // ----------------------------------------
+      // BUILD ROW FROM SAVED MAPPING
+      // ----------------------------------------
+
+      const googleValues =
+        mappingEntries.map(
+          ([googleColumn, crmFieldKey]) => {
+
+            return resolveCrmFieldValue({
+              fieldKey: crmFieldKey,
+              customer,
+              service,
+              customFields,
+            });
+          }
+        );
+
+      // ----------------------------------------
+      // GOOGLE ROW
+      // ----------------------------------------
+
+      const rowNumber =
+        Number(link.external_row);
+
+      const endColumn =
+        getGoogleColumnLetter(
+          mappingEntries.length
+        );
+
+      batchData.push({
+        range:
+          `${sheetName}!A${rowNumber}:${endColumn}${rowNumber}`,
+
+        values: [
+          googleValues,
+        ],
+      });
+
+      preparedRows.push({
+        rowNumber,
+        data: googleValues,
+      });
+    }
+
+    // ==========================================
+    // NOTHING TO UPDATE
+    // ==========================================
+
+    if (batchData.length === 0) {
+      return res.json({
+        success: true,
+        message: "No valid CRM rows found.",
+        total: links.length,
+        updated: 0,
+        skipped,
+      });
+    }
+
+    // ==========================================
+    // ONE BATCH REQUEST TO GOOGLE
+    // ==========================================
+
+    const googleResponse =
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+
+        requestBody: {
+          valueInputOption: "USER_ENTERED",
+          data: batchData,
+        },
+      });
+
+    const updated =
+      batchData.length;
+
+    console.log(
+      "CRM → GOOGLE BATCH UPDATE:",
+      {
+        totalRows: batchData.length,
+        updatedRows:
+          googleResponse.data?.totalUpdatedRows,
+        updatedCells:
+          googleResponse.data?.totalUpdatedCells,
+      }
+    );
+
+    // ==========================================
+    // RESPONSE
+    // ==========================================
+
+    return res.json({
+      success: true,
+
+      message:
+        "CRM data successfully synced to Google Sheet.",
+
+      total: links.length,
+
+      updated,
+
+      skipped,
+
+      updatedRows:
+        googleResponse.data?.totalUpdatedRows ||
+        updated,
+
+      updatedCells:
+        googleResponse.data?.totalUpdatedCells ||
+        0,
+
+      rows: preparedRows,
+    });
+
+  } catch (error) {
+
+    console.error(
+      "CRM → Google Sync Error:",
+      error.response?.data || error
+    );
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        "CRM to Google Sheet sync failed.",
+
+      error:
+        error.response?.data?.error?.message ||
+        error.message,
+    });
+  }
+};
+
+
+
+// const pushCrmToGoogleSheet = async (req, res) => {
+//   try {
+//     const {
+//       spreadsheetId,
+//       sheetName,
+//       accessToken,
+//     } = req.body;
+
+//     // ==========================================
+//     // 1. VALIDATION
+//     // ==========================================
+
+//     if (!spreadsheetId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Spreadsheet ID is required.",
+//       });
+//     }
+
+//     if (!sheetName) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Sheet name is required.",
+//       });
+//     }
+
+//     if (!accessToken) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Google access token is required.",
+//       });
+//     }
+
+//     // ==========================================
+//     // 2. LOAD GOOGLE SHEET MAPPING
+//     // ==========================================
+
+//     const mappingResult = await db.query(
+//       `
+//       SELECT mapping
+//       FROM google_sheet_mappings
+//       WHERE spreadsheet_id = $1
+//         AND sheet_name = $2
+//       LIMIT 1
+//       `,
+//       [
+//         spreadsheetId,
+//         sheetName,
+//       ]
+//     );
+
+//     if (mappingResult.rows.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "No mapping found for this Google Sheet.",
+//       });
+//     }
+
+//     const googleMapping =
+//       mappingResult.rows[0].mapping || {};
+
+//     const mappingEntries =
+//       Object.entries(googleMapping);
+
+//     if (mappingEntries.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Google Sheet mapping is empty.",
+//       });
+//     }
+
+//     // ==========================================
+//     // 3. GET GOOGLE ↔ CRM ROW LINKS
+//     // ==========================================
+
+//     const links = await db.query(
+//       `
+//       SELECT
+//         id,
+//         customer_id,
+//         service_id,
+//         external_row
+//       FROM customer_external_sources
+//       WHERE source_type = 'google_sheet'
+//         AND external_id = $1
+//         AND sheet_name = $2
+//         AND external_row IS NOT NULL
+//       ORDER BY external_row
+//       `,
+//       [
+//         spreadsheetId,
+//         sheetName,
+//       ]
+//     );
+
+//     let updated = 0;
+//     let skipped = 0;
+
+//     const preparedRows = [];
+
+//     // ==========================================
+//     // 4. BUILD CRM → GOOGLE DATA
+//     // ==========================================
+
+//     for (const link of links.rows) {
+
+//       const customerResult = await db.query(
+//         `
+//         SELECT *
+//         FROM customers
+//         WHERE id = $1
+//         LIMIT 1
+//         `,
+//         [link.customer_id]
+//       );
+
+//       if (customerResult.rows.length === 0) {
+//         skipped++;
+//         continue;
+//       }
+
+//       const customer =
+//         customerResult.rows[0];
+
+//       // ========================================
+//       // CUSTOMER DYNAMIC FIELDS
+//       // ========================================
+
+//       const dynamicResult =
+//         await db.query(
+//           `
+//           SELECT
+//             cf.field_key,
+//             cfv.field_value
+//           FROM custom_field_values cfv
+//           JOIN custom_fields cf
+//             ON cf.id = cfv.field_id
+//           WHERE cfv.record_id = $1
+//           `,
+//           [link.customer_id]
+//         );
+
+//       const dynamicValues = {};
+
+//       dynamicResult.rows.forEach(
+//         (field) => {
+//           dynamicValues[field.field_key] =
+//             field.field_value;
+//         }
+//       );
+
+//       // ========================================
+//       // BUILD GOOGLE ROW
+//       // ========================================
+
+//       const googleRow = {};
+
+//       for (
+//         const [
+//           googleColumn,
+//           crmFieldKey,
+//         ]
+//         of mappingEntries
+//       ) {
+
+//         if (
+//           dynamicValues[crmFieldKey] !==
+//           undefined
+//         ) {
+//           googleRow[googleColumn] =
+//             dynamicValues[crmFieldKey];
+//         } else {
+//           googleRow[googleColumn] =
+//             customer[crmFieldKey] ?? "";
+//         }
+//       }
+
+//       preparedRows.push({
+//         rowNumber: Number(
+//           link.external_row
+//         ),
+//         data: googleRow,
+//       });
+//     }
+
+//     // ==========================================
+//     // 5. NOTHING TO UPDATE
+//     // ==========================================
+
+//     if (preparedRows.length === 0) {
+//       return res.json({
+//         success: true,
+//         message: "No CRM rows available for Google sync.",
+//         total: links.rows.length,
+//         updated: 0,
+//         skipped,
+//         rows: [],
+//       });
+//     }
+
+//     // ==========================================
+//     // 6. GOOGLE AUTH
+//     // ==========================================
+
+//     const auth =
+//       new google.auth.OAuth2();
+
+//     auth.setCredentials({
+//       access_token: accessToken,
+//     });
+
+//     const sheets =
+//       google.sheets({
+//         version: "v4",
+//         auth,
+//       });
+
+//     // ==========================================
+//     // 7. FIND GOOGLE COLUMN RANGE
+//     // ==========================================
+
+//     const columnLetters =
+//       mappingEntries.map(
+//         ([googleColumn]) =>
+//           googleColumn
+//       );
+
+//     const columnNumber = (letters) => {
+//       let number = 0;
+
+//       for (const char of letters) {
+//         number =
+//           number * 26 +
+//           (char.charCodeAt(0) - 64);
+//       }
+
+//       return number;
+//     };
+
+//     const columnName = (number) => {
+//       let result = "";
+
+//       while (number > 0) {
+//         const remainder =
+//           (number - 1) % 26;
+
+//         result =
+//           String.fromCharCode(
+//             65 + remainder
+//           ) + result;
+
+//         number =
+//           Math.floor(
+//             (number - 1) / 26
+//           );
+//       }
+
+//       return result;
+//     };
+
+//     const columnNumbers =
+//       columnLetters.map(
+//         columnNumber
+//       );
+
+//     const startColumnNumber =
+//       Math.min(...columnNumbers);
+
+//     const endColumnNumber =
+//       Math.max(...columnNumbers);
+
+//     const startColumn =
+//       columnName(
+//         startColumnNumber
+//       );
+
+//     const endColumn =
+//       columnName(
+//         endColumnNumber
+//       );
+
+//     // ==========================================
+//     // 8. PREPARE BATCH UPDATE
+//     // ==========================================
+
+//     const batchData =
+//       preparedRows.map(
+//         (row) => {
+
+//           const values = [];
+
+//           for (
+//             let column =
+//               startColumnNumber;
+//             column <=
+//               endColumnNumber;
+//             column++
+//           ) {
+
+//             const columnLetter =
+//               columnName(column);
+
+//             values.push(
+//               row.data[columnLetter] ??
+//               ""
+//             );
+//           }
+
+//           return {
+//             range:
+//               `${sheetName}!${startColumn}${row.rowNumber}:${endColumn}${row.rowNumber}`,
+
+//             values: [
+//               values,
+//             ],
+//           };
+//         }
+//       );
+
+//     console.log(
+//       "CRM → GOOGLE BATCH UPDATE:",
+//       {
+//         rows: batchData.length,
+//         range:
+//           `${startColumn}:${endColumn}`,
+//       }
+//     );
+
+//     // ==========================================
+//     // 9. ONE GOOGLE API WRITE REQUEST
+//     // ==========================================
+
+//     const googleResult =
+//       await sheets.spreadsheets.values.batchUpdate(
+//         {
+//           spreadsheetId,
+
+//           requestBody: {
+//             valueInputOption:
+//               "USER_ENTERED",
+
+//             data: batchData,
+//           },
+//         }
+//       );
+
+//     console.log(
+//       "CRM → GOOGLE BATCH RESULT:",
+//       googleResult.data
+//     );
+
+//     updated =
+//       preparedRows.length;
+
+//     // ==========================================
+//     // 10. FINAL RESPONSE
+//     // ==========================================
+
+//     return res.json({
+//       success: true,
+
+//       message:
+//         "CRM data successfully synced to Google Sheet.",
+
+//       total:
+//         links.rows.length,
+
+//       updated,
+
+//       skipped,
+
+//       failed: 0,
+
+//       rows:
+//         preparedRows,
+
+//       googleUpdatedCells:
+//         googleResult.data
+//           ?.totalUpdatedCells || 0,
+//     });
+
+//   } catch (error) {
+
+//     console.error(
+//       "CRM → Google Sync Error:",
+//       error.response?.data ||
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+
+//       message:
+//         "CRM to Google Sheet sync failed.",
+
+//       error:
+//         error.response?.data
+//           ?.error?.message ||
+//         error.message,
+//     });
+//   }
+// };
+
 module.exports = {
   addService,
   updateService,
   getCustomerSummary,
   syncGoogleSheet,
-  saveDynamicServiceFields
+  saveDynamicServiceFields,
+  pushCrmToGoogleSheet
 };

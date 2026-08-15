@@ -11,7 +11,8 @@ import CustomerDialog from "../components/customer/CustomerDialog";
 import CustomerCard from "../components/customer/CustomerCard";
 import CustomerToolbar from "../components/customer/CustomerToolbar";
 import AddIcon from "@mui/icons-material/Add";
-import { getListCustomerFields } from "../services/customerFieldService";
+// import { getListCustomerFields } from "../services/customerFieldService";
+import { getCustomFields } from "../services/customFieldService";
 
 import { Box,Typography, Paper } from "@mui/material";
 import {
@@ -75,12 +76,27 @@ const [sort, setSort] = useState("name");
   };
 
 
+// const loadListFields = async () => {
+//   try {
+//     const data = await getListCustomerFields();
+//     setListFields(data);
+//   } catch (error) {
+//     console.error(error);
+//   }
+// };
+
 const loadListFields = async () => {
   try {
-    const data = await getListCustomerFields();
-    setListFields(data);
+    const data = await getCustomFields("customer");
+
+    setListFields(
+      (data || []).filter(
+        (field) => field.show_in?.list === true
+      )
+    );
+
   } catch (error) {
-    console.error(error);
+    console.error("Load customer list fields error:", error);
   }
 };
 

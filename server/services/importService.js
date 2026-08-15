@@ -75,14 +75,88 @@ const convertExcelDate = (value) => {
 // SAVE DYNAMIC CUSTOMER FIELDS
 // ==========================================
 
+// const saveDynamicFields = async (
+//   customerId,
+//   row,
+//   fieldMap
+// ) => {
+//   for (const [fieldKey, fieldValue] of Object.entries(row)) {
+
+//     // Standard fields skip
+//     if (
+//       [
+//         "customer_code",
+//         "customer_name",
+//         "phone",
+//         "email",
+//       ].includes(fieldKey)
+//     ) {
+//       continue;
+//     }
+
+//     // Google Sheet metadata skip
+//     if (fieldKey === "__google_row") {
+//       continue;
+//     }
+
+//     const fieldId = fieldMap[fieldKey];
+
+//     if (!fieldId) {
+//       continue;
+//     }
+
+//     const value = [
+//       "date",
+//       "last_service",
+//       "date_of_instalation",
+//     ].includes(fieldKey)
+//       ? convertExcelDate(fieldValue)
+//       : String(fieldValue ?? "");
+
+//     console.log(
+//       fieldKey,
+//       fieldValue,
+//       value
+//     );
+
+//     await db.query(
+//       `
+//       INSERT INTO customer_field_values
+//       (
+//         customer_id,
+//         field_id,
+//         field_value
+//       )
+//       VALUES
+//       (
+//         $1,
+//         $2,
+//         $3
+//       )
+//       ON CONFLICT (customer_id, field_id)
+//       DO UPDATE
+//       SET
+//         field_value = EXCLUDED.field_value,
+//         updated_at = CURRENT_TIMESTAMP
+//       `,
+//       [
+//         customerId,
+//         fieldId,
+//         value,
+//       ]
+//     );
+//   }
+// };
+
 const saveDynamicFields = async (
   customerId,
   row,
-  fieldMap
+  companyFieldMap,
+  customFieldMap
 ) => {
   for (const [fieldKey, fieldValue] of Object.entries(row)) {
 
-    // Standard fields skip
+    // Standard customer fields
     if (
       [
         "customer_code",
@@ -94,57 +168,100 @@ const saveDynamicFields = async (
       continue;
     }
 
-    // Google Sheet metadata skip
+    // Google Sheet metadata
     if (fieldKey === "__google_row") {
       continue;
     }
 
-    const fieldId = fieldMap[fieldKey];
+    // -----------------------------------------
+    // CUSTOM FIELD
+    // -----------------------------------------
 
-    if (!fieldId) {
+    if (customFieldMap[fieldKey]) {
+      const fieldId = customFieldMap[fieldKey];
+
+      const value = [
+        "date",
+        "last_service",
+        "date_of_instalation",
+      ].includes(fieldKey)
+        ? convertExcelDate(fieldValue)
+        : String(fieldValue ?? "");
+
+      await db.query(
+        `
+        INSERT INTO custom_field_values
+        (
+          field_id,
+          record_id,
+          field_value
+        )
+        VALUES
+        (
+          $1,
+          $2,
+          $3
+        )
+        ON CONFLICT (field_id, record_id)
+        DO UPDATE
+        SET
+          field_value = EXCLUDED.field_value,
+          updated_at = CURRENT_TIMESTAMP
+        `,
+        [
+          fieldId,
+          customerId,
+          value,
+        ]
+      );
+
       continue;
     }
 
-    const value = [
-      "date",
-      "last_service",
-      "date_of_instalation",
-    ].includes(fieldKey)
-      ? convertExcelDate(fieldValue)
-      : String(fieldValue ?? "");
+    // -----------------------------------------
+    // EXISTING COMPANY FIELD
+    // -----------------------------------------
 
-    console.log(
-      fieldKey,
-      fieldValue,
-      value
-    );
+    if (companyFieldMap[fieldKey]) {
+      const fieldId = companyFieldMap[fieldKey];
 
-    await db.query(
-      `
-      INSERT INTO customer_field_values
-      (
-        customer_id,
-        field_id,
-        field_value
-      )
-      VALUES
-      (
-        $1,
-        $2,
-        $3
-      )
-      ON CONFLICT (customer_id, field_id)
-      DO UPDATE
-      SET
-        field_value = EXCLUDED.field_value,
-        updated_at = CURRENT_TIMESTAMP
-      `,
-      [
-        customerId,
-        fieldId,
-        value,
-      ]
-    );
+      const value = [
+        "date",
+        "last_service",
+        "date_of_instalation",
+      ].includes(fieldKey)
+        ? convertExcelDate(fieldValue)
+        : String(fieldValue ?? "");
+
+      await db.query(
+        `
+        INSERT INTO customer_field_values
+        (
+          customer_id,
+          field_id,
+          field_value
+        )
+        VALUES
+        (
+          $1,
+          $2,
+          $3
+        )
+        ON CONFLICT (customer_id, field_id)
+        DO UPDATE
+        SET
+          field_value = EXCLUDED.field_value,
+          updated_at = CURRENT_TIMESTAMP
+        `,
+        [
+          customerId,
+          fieldId,
+          value,
+        ]
+      );
+
+      continue;
+    }
   }
 };
 
@@ -1162,21 +1279,49 @@ const importCustomersService = async (
   // COMPANY FIELDS
   // ========================================
 
-  const companyFields =
-    await db.query(
-      `
-      SELECT
+  // const companyFields =
+  //   await db.query(
+  //     `
+  //     SELECT
+  //       id,
+  //       field_key
+  //     FROM company_customer_fields
+  //     `
+  //   );
+
+  // const fieldMap = {};
+
+  // companyFields.rows.forEach((field) => {
+  //   fieldMap[field.field_key] = field.id;
+  // });
+
+  const companyFields = await db.query(`
+    SELECT
         id,
         field_key
-      FROM company_customer_fields
-      `
-    );
+    FROM company_customer_fields
+`);
 
-  const fieldMap = {};
+const customFields = await db.query(`
+    SELECT
+        id,
+        field_key
+    FROM custom_fields
+    WHERE module_key = 'customer'
+      AND is_visible = true
+      AND is_importable = true
+`);
 
-  companyFields.rows.forEach((field) => {
-    fieldMap[field.field_key] = field.id;
-  });
+const companyFieldMap = {};
+const customFieldMap = {};
+
+companyFields.rows.forEach((field) => {
+    companyFieldMap[field.field_key] = field.id;
+});
+
+customFields.rows.forEach((field) => {
+    customFieldMap[field.field_key] = field.id;
+});
 
   // ========================================
   // PROCESS ROWS
@@ -1484,11 +1629,18 @@ const importCustomersService = async (
       // 5. SAVE DYNAMIC CUSTOMER FIELDS
       // ====================================
 
+      // await saveDynamicFields(
+      //   customerId,
+      //   row,
+      //   fieldMap
+      // );
+
       await saveDynamicFields(
-        customerId,
-        row,
-        fieldMap
-      );
+  customerId,
+  row,
+  companyFieldMap,
+  customFieldMap
+);
 
       // ====================================
       // 6. GOOGLE MAPPING CHECK

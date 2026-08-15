@@ -15,6 +15,7 @@ const serviceRoutes = require("./routes/serviceRoutes");
 const companyFieldRoutes = require("./routes/companyFieldRoutes");
 const companyStatusRoutes = require("./routes/companyStatusRoutes");
 const customFieldRoutes = require("./routes/customFieldRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const app = express();
 
 app.use(cors());
@@ -55,6 +56,12 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/company/customer-fields", companyFieldRoutes);
 app.use("/api/company/customer-status", companyStatusRoutes);
 app.use("/api/custom-fields", customFieldRoutes);
+
+app.use(
+  "/api/notifications",
+  notificationRoutes
+);
+
 
 
 

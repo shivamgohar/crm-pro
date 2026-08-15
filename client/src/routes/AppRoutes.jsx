@@ -1,7 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 
-import Dashboard from "../pages/Dashboard";
+// import Dashboard from "../pages/Dashboard";
+import Dashboard from "../pages/Dashboard/Dashboard";
 import Customers from "../pages/Customers";
 import Products from "../pages/Products";
 import Orders from "../pages/Orders";
@@ -23,8 +24,10 @@ import CleanImportedData from "../pages/settings/CleanImportedData";
 import Trash from "../pages/settings/Trash";
 import GoogleSheetSync from "../pages/settings/GoogleSheetSync";
 import FieldManagement from "../pages/settings/FieldManagement";
-
-// import ImportWizard from "../modules/shared/import/pages/ImportWizard";
+import DataCleanup from "../pages/settings/DataCleanup";
+import Restore from "../pages/settings/Restore";
+import ExportData from "../pages/settings/ExportData";
+import DashboardControl from "../pages/settings/dashboard/DashboardControl";
 
 function AppRoutes() {
   return (
@@ -168,6 +171,15 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/settings/data-management/cleanup"
+        element={
+          <ProtectedRoute>
+            <DataCleanup />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/settings/data-management/google-sync"
         element={
           <ProtectedRoute>
@@ -190,6 +202,33 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Trash />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings/data-management/restore"
+        element={
+          <ProtectedRoute>
+            <Restore />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings/data-management/export"
+        element={
+          <ProtectedRoute>
+            <ExportData />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings/dashboard-control"
+        element={
+          <ProtectedRoute>
+            <DashboardControl />
           </ProtectedRoute>
         }
       />

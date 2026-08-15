@@ -341,36 +341,36 @@ const restoreCustomerField = async (req, res) => {
 
 };
 
-const getImportCustomerFields = async (req, res) => {
-    try {
+// const getImportCustomerFields = async (req, res) => {
+//     try {
 
-        const result = await pool.query(`
-     SELECT
-        id,
-        field_key,
-        field_label,
-        field_type,
-        is_required,
-        is_visible,
-        display_order,
-        is_system
-    FROM company_customer_fields
-    WHERE is_visible = true
-    ORDER BY display_order ASC
-    `);
+//         const result = await pool.query(`
+//      SELECT
+//         id,
+//         field_key,
+//         field_label,
+//         field_type,
+//         is_required,
+//         is_visible,
+//         display_order,
+//         is_system
+//     FROM company_customer_fields
+//     WHERE is_visible = true
+//     ORDER BY display_order ASC
+//     `);
 
-        res.json(result.rows);
+//         res.json(result.rows);
 
-    } catch (error) {
+//     } catch (error) {
 
-        console.error(error);
+//         console.error(error);
 
-        res.status(500).json({
-            message: "Failed to fetch import fields"
-        });
+//         res.status(500).json({
+//             message: "Failed to fetch import fields"
+//         });
 
-    }
-};
+//     }
+// };
 
 
 // const getDialogCustomerFields = async (req, res) => {
@@ -398,6 +398,60 @@ const getImportCustomerFields = async (req, res) => {
 
 //   }
 // };
+
+
+const getImportCustomerFields = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        field_key,
+        field_label,
+        field_type,
+        is_required,
+        is_visible,
+        display_order,
+        is_system,
+        'company' AS field_source
+      FROM company_customer_fields
+      WHERE is_visible = true
+
+      UNION ALL
+
+      SELECT
+        id,
+        field_key,
+        field_label,
+        field_type,
+        is_required,
+        is_visible,
+        display_order,
+        is_system,
+        'custom' AS field_source
+      FROM custom_fields
+      WHERE module_key = 'customer'
+        AND is_visible = true
+        AND is_importable = true
+        AND (
+          show_in IS NULL
+          OR COALESCE((show_in->>'import')::boolean, true) = true
+        )
+
+      ORDER BY display_order ASC, field_label ASC
+    `);
+
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error("Get Import Customer Fields Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch import fields"
+    });
+  }
+};
+
 
 const getDialogCustomerFields = async (req, res) => {
     try {

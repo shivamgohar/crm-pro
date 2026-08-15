@@ -1,5 +1,12 @@
 const db = require("../config/db");
 
+
+
+const {
+  generateLowStockNotifications,
+} = require("../services/notificationService");
+
+
 // Add Product
 const addProduct = async (req, res) => {
   try {
@@ -12,6 +19,8 @@ const addProduct = async (req, res) => {
       VALUES ($1, $2, $3, $4)`,
       [name, category, price, stock]
     );
+ // Check notification rules
+    await generateLowStockNotifications();
 
     res.json({
       success: true,
@@ -72,6 +81,8 @@ const updateProduct = async (req, res) => {
        WHERE id=$5`,
       [name, category, price, stock, id]
     );
+ // Check notification rules
+    await generateLowStockNotifications();
 
     res.json({
       success: true,

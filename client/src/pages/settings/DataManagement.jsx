@@ -11,12 +11,14 @@ import {
 import {
   FileUpload,
   FileDownload,
-  Backup,
+// DashboardCustomizeIcon,
   Restore,
   CleaningServices,
-    DeleteSweep,
+  
     Sync,
 } from "@mui/icons-material";
+
+import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 
 import { useNavigate } from "react-router-dom";
 import AppBreadcrumb from "../../components/ui/AppBreadcrumb";
@@ -35,40 +37,40 @@ function DataManagement() {
     {
       title: "Export Data",
       description: "Export CRM data",
-      icon: <FileDownload fontSize="large" />,
-      disabled: true,
+      icon: <FileDownload fontSize="large" />, 
+      path: "/settings/data-management/export",
+      disabled: false,
     },
-    {
-      title: "Backup",
-      description: "Backup database",
-      icon: <Backup fontSize="large" />,
-      disabled: true,
-    },
+   
     {
       title: "Restore",
       description: "Restore backup",
       icon: <Restore fontSize="large" />,
-      disabled: true,
+      path: "/settings/data-management/restore",
+      disabled: false,
     },
     {
       title: "Data Cleanup",
       description: "Remove duplicate or invalid data",
       icon: <CleaningServices fontSize="large" />,
-      disabled: true,
+       path: "/settings/data-management/cleanup",
+      disabled: false,
     },
-{
-  title: "Clean Imported Data",
-  description: "Remove previously imported customer data",
-  icon: <DeleteSweep />,
-  path: "/settings/data-management/clean-imported",
-  disabled: false,
-},
+
 
 {
   title: "Google Sheet Sync",
   description: "Sync existing Google Sheet data with CRM",
   icon: <Sync fontSize="large" />,
   path: "/settings/data-management/google-sync",
+  disabled: false,
+},
+
+{
+  title: "Dashboard Control",
+  description: "Choose which widgets appear on the dashboard",
+  icon: <DashboardCustomizeIcon fontSize="large" />,
+  path: "/settings/dashboard-control",
   disabled: false,
 },
 

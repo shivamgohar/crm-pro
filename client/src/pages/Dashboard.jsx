@@ -50,7 +50,7 @@ function Dashboard() {
   return (
     <Box sx={{ p: 4 }}>
       <Typography variant="h3" fontWeight={700} gutterBottom>
-        Dashboard
+        Dashboard old
       </Typography>
 
       <Typography color="text.secondary" sx={{ mb: 4 }}>

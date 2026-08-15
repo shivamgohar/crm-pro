@@ -136,6 +136,98 @@ LIMIT 5
 
 };
 
+// ==========================================
+// GET DASHBOARD WIDGET SETTINGS
+// ==========================================
+
+const getDashboardWidgetSettings = async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        widget_id,
+        enabled
+      FROM dashboard_widget_settings
+      ORDER BY id
+    `);
+
+    return res.json({
+      success: true,
+      settings: result.rows,
+    });
+
+  } catch (error) {
+    console.error(
+      "Get Dashboard Widget Settings Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load dashboard widget settings.",
+      error: error.message,
+    });
+  }
+};
+
+
+// ==========================================
+// UPDATE DASHBOARD WIDGET SETTINGS
+// ==========================================
+
+const updateDashboardWidgetSettings = async (req, res) => {
+  try {
+    const { settings } = req.body;
+
+    if (!settings || typeof settings !== "object") {
+      return res.status(400).json({
+        success: false,
+        message: "Dashboard settings are required.",
+      });
+    }
+
+    for (const [widgetId, enabled] of Object.entries(settings)) {
+
+      if (typeof enabled !== "boolean") {
+        continue;
+      }
+
+      await db.query(
+        `
+        INSERT INTO dashboard_widget_settings
+          (widget_id, enabled, updated_at)
+        VALUES
+          ($1, $2, CURRENT_TIMESTAMP)
+
+        ON CONFLICT (widget_id)
+        DO UPDATE SET
+          enabled = EXCLUDED.enabled,
+          updated_at = CURRENT_TIMESTAMP
+        `,
+        [widgetId, enabled]
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: "Dashboard widget settings updated successfully.",
+    });
+
+  } catch (error) {
+    console.error(
+      "Update Dashboard Widget Settings Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update dashboard widget settings.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
+  updateDashboardWidgetSettings,
+  getDashboardWidgetSettings,
 };

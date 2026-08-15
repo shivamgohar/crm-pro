@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict S5Zw0T76jpWtdVeMFgFNPJoaIRHhTduS7qVZdTcKEIVgXXU1vBgaeMYTEh69hUJ
+\restrict 2N6NvE2eBhXSZAZE7DnoX1KSl9aQGKurZkopwx6shlYqqDduFcpsWD1QGf8B1RN
 
 -- Dumped from database version 17.10
 -- Dumped by pg_dump version 17.10
@@ -19,12 +19,24 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: auto_identifier_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.auto_identifier_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: company_customer_fields; Type: TABLE; Schema: public; Owner: postgres
+-- Name: company_customer_fields; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.company_customer_fields (
@@ -40,14 +52,13 @@ CREATE TABLE public.company_customer_fields (
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     field_group character varying(30) DEFAULT 'customer'::character varying,
     show_in jsonb DEFAULT '{"list": true, "dialog": true, "import": true, "search": true, "profile": true}'::jsonb,
-    sort_order integer DEFAULT 0
+    sort_order integer DEFAULT 0,
+    storage_key character varying(100)
 );
 
 
-ALTER TABLE public.company_customer_fields OWNER TO postgres;
-
 --
--- Name: company_customer_fields_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: company_customer_fields_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.company_customer_fields_id_seq
@@ -59,17 +70,15 @@ CREATE SEQUENCE public.company_customer_fields_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.company_customer_fields_id_seq OWNER TO postgres;
-
 --
--- Name: company_customer_fields_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: company_customer_fields_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.company_customer_fields_id_seq OWNED BY public.company_customer_fields.id;
 
 
 --
--- Name: company_customer_status; Type: TABLE; Schema: public; Owner: postgres
+-- Name: company_customer_status; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.company_customer_status (
@@ -85,10 +94,8 @@ CREATE TABLE public.company_customer_status (
 );
 
 
-ALTER TABLE public.company_customer_status OWNER TO postgres;
-
 --
--- Name: company_customer_status_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: company_customer_status_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.company_customer_status_id_seq
@@ -100,17 +107,132 @@ CREATE SEQUENCE public.company_customer_status_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.company_customer_status_id_seq OWNER TO postgres;
-
 --
--- Name: company_customer_status_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: company_customer_status_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.company_customer_status_id_seq OWNED BY public.company_customer_status.id;
 
 
 --
--- Name: customer_field_values; Type: TABLE; Schema: public; Owner: postgres
+-- Name: custom_field_values; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.custom_field_values (
+    id integer NOT NULL,
+    field_id integer NOT NULL,
+    record_id integer NOT NULL,
+    field_value text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: custom_field_values_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.custom_field_values_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: custom_field_values_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.custom_field_values_id_seq OWNED BY public.custom_field_values.id;
+
+
+--
+-- Name: custom_fields; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.custom_fields (
+    id integer NOT NULL,
+    module_key character varying(50) NOT NULL,
+    field_key character varying(100) NOT NULL,
+    field_label character varying(100) NOT NULL,
+    field_type character varying(50) DEFAULT 'text'::character varying NOT NULL,
+    is_required boolean DEFAULT false NOT NULL,
+    is_unique boolean DEFAULT false NOT NULL,
+    is_identifier boolean DEFAULT false NOT NULL,
+    is_searchable boolean DEFAULT true NOT NULL,
+    is_importable boolean DEFAULT true NOT NULL,
+    is_visible boolean DEFAULT true NOT NULL,
+    show_in jsonb DEFAULT '{"form": true, "list": true, "import": true, "search": true, "profile": true}'::jsonb NOT NULL,
+    options jsonb,
+    display_order integer DEFAULT 0 NOT NULL,
+    is_system boolean DEFAULT false NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: custom_fields_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.custom_fields_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: custom_fields_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.custom_fields_id_seq OWNED BY public.custom_fields.id;
+
+
+--
+-- Name: customer_external_sources; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.customer_external_sources (
+    id integer NOT NULL,
+    customer_id integer NOT NULL,
+    source_type character varying(50) NOT NULL,
+    external_id text,
+    external_row integer,
+    sheet_name character varying(255),
+    metadata jsonb,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    service_id integer
+);
+
+
+--
+-- Name: customer_external_sources_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.customer_external_sources_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: customer_external_sources_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.customer_external_sources_id_seq OWNED BY public.customer_external_sources.id;
+
+
+--
+-- Name: customer_field_values; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.customer_field_values (
@@ -123,10 +245,8 @@ CREATE TABLE public.customer_field_values (
 );
 
 
-ALTER TABLE public.customer_field_values OWNER TO postgres;
-
 --
--- Name: customer_field_values_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: customer_field_values_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.customer_field_values_id_seq
@@ -138,17 +258,15 @@ CREATE SEQUENCE public.customer_field_values_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.customer_field_values_id_seq OWNER TO postgres;
-
 --
--- Name: customer_field_values_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: customer_field_values_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.customer_field_values_id_seq OWNED BY public.customer_field_values.id;
 
 
 --
--- Name: customers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: customers; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.customers (
@@ -163,14 +281,17 @@ CREATE TABLE public.customers (
     service character varying(100),
     engineer character varying(100),
     remark text,
-    amount numeric(10,2)
+    amount numeric(10,2),
+    source character varying(30),
+    import_batch_id integer,
+    is_deleted boolean DEFAULT false NOT NULL,
+    deleted_at timestamp without time zone,
+    deleted_by integer
 );
 
 
-ALTER TABLE public.customers OWNER TO postgres;
-
 --
--- Name: customers_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: customers_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.customers_id_seq
@@ -182,17 +303,260 @@ CREATE SEQUENCE public.customers_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.customers_id_seq OWNER TO postgres;
-
 --
--- Name: customers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: customers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.customers_id_seq OWNED BY public.customers.id;
 
 
 --
--- Name: orders; Type: TABLE; Schema: public; Owner: postgres
+-- Name: dashboard_widget_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dashboard_widget_settings (
+    id integer NOT NULL,
+    widget_id character varying(100) NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: dashboard_widget_settings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.dashboard_widget_settings_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: dashboard_widget_settings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.dashboard_widget_settings_id_seq OWNED BY public.dashboard_widget_settings.id;
+
+
+--
+-- Name: google_sheet_mappings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.google_sheet_mappings (
+    id integer NOT NULL,
+    spreadsheet_id character varying(255) NOT NULL,
+    sheet_name character varying(255) NOT NULL,
+    mapping jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    import_mapping jsonb DEFAULT '{}'::jsonb NOT NULL,
+    export_mapping jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+
+--
+-- Name: google_sheet_mappings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.google_sheet_mappings_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: google_sheet_mappings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.google_sheet_mappings_id_seq OWNED BY public.google_sheet_mappings.id;
+
+
+--
+-- Name: identifier_generators; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.identifier_generators (
+    id integer NOT NULL,
+    generator_key character varying(100) NOT NULL,
+    current_number bigint DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: identifier_generators_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.identifier_generators_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: identifier_generators_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.identifier_generators_id_seq OWNED BY public.identifier_generators.id;
+
+
+--
+-- Name: import_batches; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.import_batches (
+    id integer NOT NULL,
+    source character varying(30) NOT NULL,
+    file_name character varying(255),
+    total_rows integer DEFAULT 0,
+    created_by integer,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: import_batches_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.import_batches_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: import_batches_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.import_batches_id_seq OWNED BY public.import_batches.id;
+
+
+--
+-- Name: notification_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notification_settings (
+    id integer NOT NULL,
+    notification_type_id integer NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    threshold numeric,
+    days_before integer,
+    priority character varying(20) DEFAULT 'normal'::character varying,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: notification_settings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.notification_settings_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: notification_settings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.notification_settings_id_seq OWNED BY public.notification_settings.id;
+
+
+--
+-- Name: notification_types; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notification_types (
+    id integer NOT NULL,
+    key character varying(100) NOT NULL,
+    name character varying(150) NOT NULL,
+    description text,
+    category character varying(50) DEFAULT 'general'::character varying,
+    default_enabled boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: notification_types_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.notification_types_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: notification_types_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.notification_types_id_seq OWNED BY public.notification_types.id;
+
+
+--
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notifications (
+    id integer NOT NULL,
+    notification_type_id integer,
+    title character varying(255) NOT NULL,
+    message text NOT NULL,
+    priority character varying(20) DEFAULT 'normal'::character varying,
+    is_read boolean DEFAULT false,
+    reference_type character varying(100),
+    reference_id integer,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    is_active boolean DEFAULT true NOT NULL,
+    resolved_at timestamp without time zone
+);
+
+
+--
+-- Name: notifications_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.notifications_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: notifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.notifications_id_seq OWNED BY public.notifications.id;
+
+
+--
+-- Name: orders; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.orders (
@@ -205,10 +569,8 @@ CREATE TABLE public.orders (
 );
 
 
-ALTER TABLE public.orders OWNER TO postgres;
-
 --
--- Name: orders_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: orders_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.orders_id_seq
@@ -220,17 +582,15 @@ CREATE SEQUENCE public.orders_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.orders_id_seq OWNER TO postgres;
-
 --
--- Name: orders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: orders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.orders_id_seq OWNED BY public.orders.id;
 
 
 --
--- Name: payments; Type: TABLE; Schema: public; Owner: postgres
+-- Name: payments; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.payments (
@@ -243,10 +603,8 @@ CREATE TABLE public.payments (
 );
 
 
-ALTER TABLE public.payments OWNER TO postgres;
-
 --
--- Name: payments_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: payments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.payments_id_seq
@@ -258,17 +616,15 @@ CREATE SEQUENCE public.payments_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.payments_id_seq OWNER TO postgres;
-
 --
--- Name: payments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: payments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.payments_id_seq OWNED BY public.payments.id;
 
 
 --
--- Name: products; Type: TABLE; Schema: public; Owner: postgres
+-- Name: products; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.products (
@@ -280,10 +636,8 @@ CREATE TABLE public.products (
 );
 
 
-ALTER TABLE public.products OWNER TO postgres;
-
 --
--- Name: products_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: products_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.products_id_seq
@@ -295,17 +649,49 @@ CREATE SEQUENCE public.products_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.products_id_seq OWNER TO postgres;
-
 --
--- Name: products_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: products_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.products_id_seq OWNED BY public.products.id;
 
 
 --
--- Name: service_products; Type: TABLE; Schema: public; Owner: postgres
+-- Name: service_field_values; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.service_field_values (
+    id integer NOT NULL,
+    service_id integer NOT NULL,
+    field_id integer NOT NULL,
+    field_value text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: service_field_values_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.service_field_values_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: service_field_values_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.service_field_values_id_seq OWNED BY public.service_field_values.id;
+
+
+--
+-- Name: service_products; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.service_products (
@@ -319,10 +705,8 @@ CREATE TABLE public.service_products (
 );
 
 
-ALTER TABLE public.service_products OWNER TO postgres;
-
 --
--- Name: service_products_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: service_products_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.service_products_id_seq
@@ -334,17 +718,15 @@ CREATE SEQUENCE public.service_products_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.service_products_id_seq OWNER TO postgres;
-
 --
--- Name: service_products_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: service_products_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.service_products_id_seq OWNED BY public.service_products.id;
 
 
 --
--- Name: services; Type: TABLE; Schema: public; Owner: postgres
+-- Name: services; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.services (
@@ -363,10 +745,8 @@ CREATE TABLE public.services (
 );
 
 
-ALTER TABLE public.services OWNER TO postgres;
-
 --
--- Name: services_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: services_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.services_id_seq
@@ -378,17 +758,15 @@ CREATE SEQUENCE public.services_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.services_id_seq OWNER TO postgres;
-
 --
--- Name: services_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: services_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.services_id_seq OWNED BY public.services.id;
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: postgres
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
@@ -404,10 +782,8 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO postgres;
-
 --
--- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.users_id_seq
@@ -419,87 +795,162 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.users_id_seq OWNER TO postgres;
-
 --
--- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
--- Name: company_customer_fields id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: company_customer_fields id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.company_customer_fields ALTER COLUMN id SET DEFAULT nextval('public.company_customer_fields_id_seq'::regclass);
 
 
 --
--- Name: company_customer_status id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: company_customer_status id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.company_customer_status ALTER COLUMN id SET DEFAULT nextval('public.company_customer_status_id_seq'::regclass);
 
 
 --
--- Name: customer_field_values id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: custom_field_values id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custom_field_values ALTER COLUMN id SET DEFAULT nextval('public.custom_field_values_id_seq'::regclass);
+
+
+--
+-- Name: custom_fields id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custom_fields ALTER COLUMN id SET DEFAULT nextval('public.custom_fields_id_seq'::regclass);
+
+
+--
+-- Name: customer_external_sources id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.customer_external_sources ALTER COLUMN id SET DEFAULT nextval('public.customer_external_sources_id_seq'::regclass);
+
+
+--
+-- Name: customer_field_values id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.customer_field_values ALTER COLUMN id SET DEFAULT nextval('public.customer_field_values_id_seq'::regclass);
 
 
 --
--- Name: customers id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: customers id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.customers ALTER COLUMN id SET DEFAULT nextval('public.customers_id_seq'::regclass);
 
 
 --
--- Name: orders id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: dashboard_widget_settings id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_widget_settings ALTER COLUMN id SET DEFAULT nextval('public.dashboard_widget_settings_id_seq'::regclass);
+
+
+--
+-- Name: google_sheet_mappings id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.google_sheet_mappings ALTER COLUMN id SET DEFAULT nextval('public.google_sheet_mappings_id_seq'::regclass);
+
+
+--
+-- Name: identifier_generators id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.identifier_generators ALTER COLUMN id SET DEFAULT nextval('public.identifier_generators_id_seq'::regclass);
+
+
+--
+-- Name: import_batches id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.import_batches ALTER COLUMN id SET DEFAULT nextval('public.import_batches_id_seq'::regclass);
+
+
+--
+-- Name: notification_settings id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_settings ALTER COLUMN id SET DEFAULT nextval('public.notification_settings_id_seq'::regclass);
+
+
+--
+-- Name: notification_types id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_types ALTER COLUMN id SET DEFAULT nextval('public.notification_types_id_seq'::regclass);
+
+
+--
+-- Name: notifications id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications ALTER COLUMN id SET DEFAULT nextval('public.notifications_id_seq'::regclass);
+
+
+--
+-- Name: orders id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.orders ALTER COLUMN id SET DEFAULT nextval('public.orders_id_seq'::regclass);
 
 
 --
--- Name: payments id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: payments id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.payments ALTER COLUMN id SET DEFAULT nextval('public.payments_id_seq'::regclass);
 
 
 --
--- Name: products id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: products id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.products ALTER COLUMN id SET DEFAULT nextval('public.products_id_seq'::regclass);
 
 
 --
--- Name: service_products id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: service_field_values id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_field_values ALTER COLUMN id SET DEFAULT nextval('public.service_field_values_id_seq'::regclass);
+
+
+--
+-- Name: service_products id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.service_products ALTER COLUMN id SET DEFAULT nextval('public.service_products_id_seq'::regclass);
 
 
 --
--- Name: services id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: services id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.services ALTER COLUMN id SET DEFAULT nextval('public.services_id_seq'::regclass);
 
 
 --
--- Name: users id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
--- Name: company_customer_fields company_customer_fields_field_key_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: company_customer_fields company_customer_fields_field_key_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.company_customer_fields
@@ -507,7 +958,7 @@ ALTER TABLE ONLY public.company_customer_fields
 
 
 --
--- Name: company_customer_fields company_customer_fields_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: company_customer_fields company_customer_fields_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.company_customer_fields
@@ -515,7 +966,7 @@ ALTER TABLE ONLY public.company_customer_fields
 
 
 --
--- Name: company_customer_status company_customer_status_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: company_customer_status company_customer_status_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.company_customer_status
@@ -523,7 +974,7 @@ ALTER TABLE ONLY public.company_customer_status
 
 
 --
--- Name: company_customer_status company_customer_status_status_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: company_customer_status company_customer_status_status_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.company_customer_status
@@ -531,7 +982,47 @@ ALTER TABLE ONLY public.company_customer_status
 
 
 --
--- Name: customer_field_values customer_field_values_customer_id_field_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: custom_field_values custom_field_values_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custom_field_values
+    ADD CONSTRAINT custom_field_values_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: custom_field_values custom_field_values_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custom_field_values
+    ADD CONSTRAINT custom_field_values_unique UNIQUE (field_id, record_id);
+
+
+--
+-- Name: custom_fields custom_fields_field_key_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custom_fields
+    ADD CONSTRAINT custom_fields_field_key_unique UNIQUE (module_key, field_key);
+
+
+--
+-- Name: custom_fields custom_fields_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custom_fields
+    ADD CONSTRAINT custom_fields_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: customer_external_sources customer_external_sources_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.customer_external_sources
+    ADD CONSTRAINT customer_external_sources_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: customer_field_values customer_field_values_customer_id_field_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.customer_field_values
@@ -539,7 +1030,7 @@ ALTER TABLE ONLY public.customer_field_values
 
 
 --
--- Name: customer_field_values customer_field_values_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: customer_field_values customer_field_values_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.customer_field_values
@@ -547,7 +1038,7 @@ ALTER TABLE ONLY public.customer_field_values
 
 
 --
--- Name: customers customers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: customers customers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.customers
@@ -555,7 +1046,103 @@ ALTER TABLE ONLY public.customers
 
 
 --
--- Name: orders orders_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dashboard_widget_settings dashboard_widget_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_widget_settings
+    ADD CONSTRAINT dashboard_widget_settings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: dashboard_widget_settings dashboard_widget_settings_widget_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_widget_settings
+    ADD CONSTRAINT dashboard_widget_settings_widget_id_key UNIQUE (widget_id);
+
+
+--
+-- Name: google_sheet_mappings google_sheet_mappings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.google_sheet_mappings
+    ADD CONSTRAINT google_sheet_mappings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: google_sheet_mappings google_sheet_mappings_spreadsheet_id_sheet_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.google_sheet_mappings
+    ADD CONSTRAINT google_sheet_mappings_spreadsheet_id_sheet_name_key UNIQUE (spreadsheet_id, sheet_name);
+
+
+--
+-- Name: identifier_generators identifier_generators_generator_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.identifier_generators
+    ADD CONSTRAINT identifier_generators_generator_key_key UNIQUE (generator_key);
+
+
+--
+-- Name: identifier_generators identifier_generators_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.identifier_generators
+    ADD CONSTRAINT identifier_generators_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: import_batches import_batches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.import_batches
+    ADD CONSTRAINT import_batches_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: notification_settings notification_settings_notification_type_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_settings
+    ADD CONSTRAINT notification_settings_notification_type_id_key UNIQUE (notification_type_id);
+
+
+--
+-- Name: notification_settings notification_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_settings
+    ADD CONSTRAINT notification_settings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: notification_types notification_types_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_types
+    ADD CONSTRAINT notification_types_key_key UNIQUE (key);
+
+
+--
+-- Name: notification_types notification_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_types
+    ADD CONSTRAINT notification_types_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: orders orders_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.orders
@@ -563,7 +1150,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- Name: payments payments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: payments payments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.payments
@@ -571,7 +1158,7 @@ ALTER TABLE ONLY public.payments
 
 
 --
--- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.products
@@ -579,7 +1166,23 @@ ALTER TABLE ONLY public.products
 
 
 --
--- Name: service_products service_products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: service_field_values service_field_values_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_field_values
+    ADD CONSTRAINT service_field_values_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: service_field_values service_field_values_service_field_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_field_values
+    ADD CONSTRAINT service_field_values_service_field_unique UNIQUE (service_id, field_id);
+
+
+--
+-- Name: service_products service_products_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.service_products
@@ -587,7 +1190,7 @@ ALTER TABLE ONLY public.service_products
 
 
 --
--- Name: services services_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: services services_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.services
@@ -595,7 +1198,7 @@ ALTER TABLE ONLY public.services
 
 
 --
--- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -603,7 +1206,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -611,7 +1214,52 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: customer_field_values customer_field_values_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: idx_customer_external_sources_customer; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_customer_external_sources_customer ON public.customer_external_sources USING btree (customer_id);
+
+
+--
+-- Name: idx_customer_external_sources_external; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_customer_external_sources_external ON public.customer_external_sources USING btree (source_type, external_id, sheet_name, external_row);
+
+
+--
+-- Name: idx_customer_external_sources_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_customer_external_sources_unique ON public.customer_external_sources USING btree (source_type, external_id, sheet_name, external_row);
+
+
+--
+-- Name: custom_field_values custom_field_values_field_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custom_field_values
+    ADD CONSTRAINT custom_field_values_field_id_fkey FOREIGN KEY (field_id) REFERENCES public.custom_fields(id) ON DELETE CASCADE;
+
+
+--
+-- Name: customer_external_sources customer_external_sources_customer_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.customer_external_sources
+    ADD CONSTRAINT customer_external_sources_customer_fk FOREIGN KEY (customer_id) REFERENCES public.customers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: customer_external_sources customer_external_sources_service_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.customer_external_sources
+    ADD CONSTRAINT customer_external_sources_service_fk FOREIGN KEY (service_id) REFERENCES public.services(id) ON DELETE CASCADE;
+
+
+--
+-- Name: customer_field_values customer_field_values_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.customer_field_values
@@ -619,7 +1267,7 @@ ALTER TABLE ONLY public.customer_field_values
 
 
 --
--- Name: customer_field_values customer_field_values_field_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: customer_field_values customer_field_values_field_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.customer_field_values
@@ -627,7 +1275,15 @@ ALTER TABLE ONLY public.customer_field_values
 
 
 --
--- Name: service_products fk_product; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: customers customers_import_batch_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.customers
+    ADD CONSTRAINT customers_import_batch_id_fkey FOREIGN KEY (import_batch_id) REFERENCES public.import_batches(id) ON DELETE SET NULL;
+
+
+--
+-- Name: service_products fk_product; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.service_products
@@ -635,7 +1291,7 @@ ALTER TABLE ONLY public.service_products
 
 
 --
--- Name: service_products fk_service; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: service_products fk_service; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.service_products
@@ -643,7 +1299,23 @@ ALTER TABLE ONLY public.service_products
 
 
 --
--- Name: orders orders_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notification_settings notification_settings_notification_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification_settings
+    ADD CONSTRAINT notification_settings_notification_type_id_fkey FOREIGN KEY (notification_type_id) REFERENCES public.notification_types(id) ON DELETE CASCADE;
+
+
+--
+-- Name: notifications notifications_notification_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_notification_type_id_fkey FOREIGN KEY (notification_type_id) REFERENCES public.notification_types(id) ON DELETE SET NULL;
+
+
+--
+-- Name: orders orders_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.orders
@@ -651,7 +1323,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- Name: orders orders_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: orders orders_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.orders
@@ -659,7 +1331,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- Name: payments payments_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: payments payments_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.payments
@@ -667,8 +1339,24 @@ ALTER TABLE ONLY public.payments
 
 
 --
+-- Name: service_field_values service_field_values_field_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_field_values
+    ADD CONSTRAINT service_field_values_field_fk FOREIGN KEY (field_id) REFERENCES public.company_customer_fields(id) ON DELETE CASCADE;
+
+
+--
+-- Name: service_field_values service_field_values_service_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_field_values
+    ADD CONSTRAINT service_field_values_service_fk FOREIGN KEY (service_id) REFERENCES public.services(id) ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict S5Zw0T76jpWtdVeMFgFNPJoaIRHhTduS7qVZdTcKEIVgXXU1vBgaeMYTEh69hUJ
+\unrestrict 2N6NvE2eBhXSZAZE7DnoX1KSl9aQGKurZkopwx6shlYqqDduFcpsWD1QGf8B1RN
 

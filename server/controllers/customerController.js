@@ -6,70 +6,270 @@ const {
 } = require("../services/importService");
 
 
+// const addCustomer = async (req, res) => {
+
+//   try {
+
+//     // const {
+//     //   name,
+//     //   phone,
+//     //   email,
+//     //   address,
+//     // } = req.body;
+
+//     const { fields } = req.body;
+
+//     // await db.query(
+//     //   `INSERT INTO customers
+//     //         (name, phone, email, address)
+//     //         VALUES ($1, $2, $3, $4)`,
+//     //   [name, phone, email, address]
+//     // );
+
+
+//     // Check duplicate customer code
+//     const customerCodeExists = await db.query(
+//       `
+//     SELECT id
+//     FROM customers
+//     WHERE customer_code = $1
+//     `,
+//       [fields.customer_code]
+//     );
+
+//     if (customerCodeExists.rows.length > 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Customer code already exists."
+//       });
+//     }
+
+//     // Check duplicate phone
+//     const phoneExists = await db.query(
+//       `
+//     SELECT id
+//     FROM customers
+//     WHERE phone = $1
+//     `,
+//       [fields.phone]
+//     );
+
+//     if (phoneExists.rows.length > 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Phone number already exists."
+//       });
+//     }
+
+//     await db.query("BEGIN");
+
+//     const customerResult = await db.query(
+//       `
+//   INSERT INTO customers
+//   (customer_code, name, phone,source)
+//   VALUES ($1, $2, $3, $4)
+//   RETURNING id
+//   `,
+//       [
+//         fields.customer_code,
+//         fields.customer_name,
+//         fields.phone,
+//         "crm",
+//       ]
+//     );
+
+//     const customerId = customerResult.rows[0].id;
+
+//     // 1. Pehle database se fields lao
+//     const fieldsResult = await db.query(`
+//     SELECT id, field_key
+//     FROM company_customer_fields
+// `);
+
+//     // 2. Phir fieldMap banao
+//     const fieldMap = {};
+
+//     fieldsResult.rows.forEach((field) => {
+//       fieldMap[field.field_key] = field.id;
+//     });
+
+//     // 3. Ab fieldMap use karo
+//     for (const [fieldKey, fieldValue] of Object.entries(fields)) {
+
+//       if (
+//         fieldKey === "customer_code" ||
+//         fieldKey === "customer_name" ||
+//         fieldKey === "phone"
+//       ) {
+//         continue;
+//       }
+
+//       if (!fieldMap[fieldKey]) {
+//         continue;
+//       }
+
+//       await db.query(
+//         `
+//         INSERT INTO customer_field_values
+//         (customer_id, field_id, field_value)
+//         VALUES ($1, $2, $3)
+//         `,
+//         [
+//           customerId,
+//           fieldMap[fieldKey],
+//           fieldValue,
+//         ]
+//       );
+//     }
+
+
+//     console.log(fieldMap);
+//     await db.query("COMMIT");
+
+//     // const customerId = customerResult.rows[0].id;
+
+//     // for (const [fieldKey, fieldValue] of Object.entries(fields)) {
+
+//     //     if (
+//     //         fieldKey === "customer_code" ||
+//     //         fieldKey === "customer_name" ||
+//     //         fieldKey === "phone"
+//     //     ) {
+//     //         continue;
+//     //     }
+
+//     //     if (!fieldMap[fieldKey]) {
+//     //         continue;
+//     //     }
+
+//     //     await db.query(
+//     //         `
+//     //         INSERT INTO customer_field_values
+//     //         (customer_id, field_id, field_value)
+//     //         VALUES ($1, $2, $3)
+//     //         `,
+//     //         [
+//     //             customerId,
+//     //             fieldMap[fieldKey],
+//     //             fieldValue,
+//     //         ]
+//     //     );
+//     // }
+
+//     // const fieldsResult = await db.query(`
+//     //     SELECT id, field_key
+//     //     FROM company_customer_fields
+//     // `);
+
+//     // const fieldMap = {};
+
+//     // fieldsResult.rows.forEach((field) => {
+//     //     fieldMap[field.field_key] = field.id;
+//     // });
+
+//     // console.log(fieldMap);
+
+//     // await db.query("COMMIT");
+
+//     res.json({
+//       success: true,
+//       message: "Customer Added Successfully",
+//     });
+
+//   } catch (error) {
+
+//     await db.query("ROLLBACK");
+
+//     console.error(error);
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Server Error",
+//     });
+
+//   }
+
+// };
+
+
 const addCustomer = async (req, res) => {
+  const client = await db.connect();
 
   try {
-
-    // const {
-    //   name,
-    //   phone,
-    //   email,
-    //   address,
-    // } = req.body;
-
     const { fields } = req.body;
 
-    // await db.query(
-    //   `INSERT INTO customers
-    //         (name, phone, email, address)
-    //         VALUES ($1, $2, $3, $4)`,
-    //   [name, phone, email, address]
-    // );
+    if (!fields || typeof fields !== "object") {
+      return res.status(400).json({
+        success: false,
+        message: "Customer fields are required.",
+      });
+    }
 
+    // -----------------------------------------
+    // 1. Check duplicate customer code
+    // -----------------------------------------
 
-    // Check duplicate customer code
-    const customerCodeExists = await db.query(
+    const customerCodeExists = await client.query(
       `
-    SELECT id
-    FROM customers
-    WHERE customer_code = $1
-    `,
+      SELECT id
+      FROM customers
+      WHERE customer_code = $1
+      LIMIT 1
+      `,
       [fields.customer_code]
     );
 
     if (customerCodeExists.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Customer code already exists."
+        message: "Customer code already exists.",
       });
     }
 
-    // Check duplicate phone
-    const phoneExists = await db.query(
+    // -----------------------------------------
+    // 2. Check duplicate phone
+    // -----------------------------------------
+
+    const phoneExists = await client.query(
       `
-    SELECT id
-    FROM customers
-    WHERE phone = $1
-    `,
+      SELECT id
+      FROM customers
+      WHERE phone = $1
+      LIMIT 1
+      `,
       [fields.phone]
     );
 
     if (phoneExists.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Phone number already exists."
+        message: "Phone number already exists.",
       });
     }
 
-    await db.query("BEGIN");
+    // -----------------------------------------
+    // 3. Start transaction
+    // -----------------------------------------
 
-    const customerResult = await db.query(
+    await client.query("BEGIN");
+
+    // -----------------------------------------
+    // 4. Create main customer record
+    // -----------------------------------------
+
+    const customerResult = await client.query(
       `
-  INSERT INTO customers
-  (customer_code, name, phone,source)
-  VALUES ($1, $2, $3, $4)
-  RETURNING id
-  `,
+      INSERT INTO customers
+      (
+        customer_code,
+        name,
+        phone,
+        source
+      )
+      VALUES
+      ($1, $2, $3, $4)
+      RETURNING id
+      `,
       [
         fields.customer_code,
         fields.customer_name,
@@ -80,22 +280,40 @@ const addCustomer = async (req, res) => {
 
     const customerId = customerResult.rows[0].id;
 
-    // 1. Pehle database se fields lao
-    const fieldsResult = await db.query(`
-    SELECT id, field_key
-    FROM company_customer_fields
-`);
+    // -----------------------------------------
+    // 5. Get NEW custom field definitions
+    // -----------------------------------------
 
-    // 2. Phir fieldMap banao
+    const customFieldsResult = await client.query(
+      `
+      SELECT
+        id,
+        field_key,
+        field_type,
+        is_visible
+      FROM custom_fields
+      WHERE module_key = 'customer'
+      `
+    );
+
+    // -----------------------------------------
+    // 6. Create field map
+    // -----------------------------------------
+
     const fieldMap = {};
 
-    fieldsResult.rows.forEach((field) => {
-      fieldMap[field.field_key] = field.id;
+    customFieldsResult.rows.forEach((field) => {
+      fieldMap[field.field_key] = field;
     });
 
-    // 3. Ab fieldMap use karo
+    // -----------------------------------------
+    // 7. Save custom field values
+    // -----------------------------------------
+
     for (const [fieldKey, fieldValue] of Object.entries(fields)) {
 
+      // Core customer fields
+      // already stored in customers table
       if (
         fieldKey === "customer_code" ||
         fieldKey === "customer_name" ||
@@ -104,93 +322,97 @@ const addCustomer = async (req, res) => {
         continue;
       }
 
-      if (!fieldMap[fieldKey]) {
+      const customField = fieldMap[fieldKey];
+
+      // Field CRM definition me exist nahi karta
+      if (!customField) {
         continue;
       }
 
-      await db.query(
+      /*
+       * Empty values ko bhi save nahi karenge.
+       * Isse unnecessary rows nahi banengi.
+       */
+      if (
+        fieldValue === null ||
+        fieldValue === undefined ||
+        String(fieldValue).trim() === ""
+      ) {
+        continue;
+      }
+
+      await client.query(
         `
-        INSERT INTO customer_field_values
-        (customer_id, field_id, field_value)
-        VALUES ($1, $2, $3)
+        INSERT INTO custom_field_values
+        (
+          field_id,
+          record_id,
+          field_value,
+          updated_at
+        )
+        VALUES
+        ($1, $2, $3, NOW())
+        ON CONFLICT (field_id, record_id)
+        DO UPDATE SET
+          field_value = EXCLUDED.field_value,
+          updated_at = NOW()
         `,
         [
+          customField.id,
           customerId,
-          fieldMap[fieldKey],
-          fieldValue,
+          String(fieldValue),
         ]
       );
     }
 
+    // -----------------------------------------
+    // 8. Commit everything
+    // -----------------------------------------
 
-    console.log(fieldMap);
-    await db.query("COMMIT");
+    await client.query("COMMIT");
 
-    // const customerId = customerResult.rows[0].id;
-
-    // for (const [fieldKey, fieldValue] of Object.entries(fields)) {
-
-    //     if (
-    //         fieldKey === "customer_code" ||
-    //         fieldKey === "customer_name" ||
-    //         fieldKey === "phone"
-    //     ) {
-    //         continue;
-    //     }
-
-    //     if (!fieldMap[fieldKey]) {
-    //         continue;
-    //     }
-
-    //     await db.query(
-    //         `
-    //         INSERT INTO customer_field_values
-    //         (customer_id, field_id, field_value)
-    //         VALUES ($1, $2, $3)
-    //         `,
-    //         [
-    //             customerId,
-    //             fieldMap[fieldKey],
-    //             fieldValue,
-    //         ]
-    //     );
-    // }
-
-    // const fieldsResult = await db.query(`
-    //     SELECT id, field_key
-    //     FROM company_customer_fields
-    // `);
-
-    // const fieldMap = {};
-
-    // fieldsResult.rows.forEach((field) => {
-    //     fieldMap[field.field_key] = field.id;
-    // });
-
-    // console.log(fieldMap);
-
-    // await db.query("COMMIT");
+    // -----------------------------------------
+    // 9. Response
+    // -----------------------------------------
 
     res.json({
       success: true,
       message: "Customer Added Successfully",
+      customerId,
     });
 
   } catch (error) {
 
-    await db.query("ROLLBACK");
+    // -----------------------------------------
+    // Rollback if anything fails
+    // -----------------------------------------
 
-    console.error(error);
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      console.error(
+        "Customer Add Rollback Error:",
+        rollbackError
+      );
+    }
+
+    console.error(
+      "Add Customer Error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
       message: "Server Error",
     });
 
+  } finally {
+
+    // Always return connection to pool
+    client.release();
+
   }
-
 };
-
 
 const getCustomers = async (req, res) => {
 
@@ -344,18 +566,84 @@ OFFSET $${values.length + 2}
 
 };
 
+// const getCustomerById = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     // Main Customer
+//     const result = await db.query(
+//       `
+//       SELECT *
+//       FROM customers
+//       WHERE id = $1
+// AND is_deleted = false
+//       LIMIT 1;
+//       `,
+//       [id]
+//     );
+
+//     if (result.rows.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Customer not found",
+//       });
+//     }
+
+//     const customer = result.rows[0];
+
+//     // Dynamic Fields
+//     const fieldValues = await db.query(
+//       `
+//       SELECT
+//           ccf.field_key,
+//           cfv.field_value
+//       FROM customer_field_values cfv
+//       JOIN company_customer_fields ccf
+//           ON cfv.field_id = ccf.id
+//       WHERE cfv.customer_id = $1
+//       `,
+//       [id]
+//     );
+
+//     // Merge Customer + Dynamic Fields
+//     const customerData = {
+//       ...customer,
+//     };
+
+//     fieldValues.rows.forEach((field) => {
+//       customerData[field.field_key] = field.field_value;
+//     });
+
+//     res.json({
+//       success: true,
+//       customer: customerData,
+//     });
+
+//   } catch (error) {
+//     console.error(error);
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Server Error",
+//     });
+//   }
+// };
+
 const getCustomerById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Main Customer
+    // -----------------------------------------
+    // 1. Main Customer
+    // -----------------------------------------
+
     const result = await db.query(
       `
       SELECT *
       FROM customers
       WHERE id = $1
-AND is_deleted = false
-      LIMIT 1;
+        AND is_deleted = false
+      LIMIT 1
       `,
       [id]
     );
@@ -369,21 +657,37 @@ AND is_deleted = false
 
     const customer = result.rows[0];
 
-    // Dynamic Fields
+    // -----------------------------------------
+    // 2. Dynamic Custom Fields
+    // -----------------------------------------
+
     const fieldValues = await db.query(
       `
       SELECT
-          ccf.field_key,
-          cfv.field_value
-      FROM customer_field_values cfv
-      JOIN company_customer_fields ccf
-          ON cfv.field_id = ccf.id
-      WHERE cfv.customer_id = $1
+        cf.field_key,
+        cf.field_label,
+        cf.field_type,
+        cf.is_required,
+        cf.is_visible,
+        cf.show_in,
+        cfv.field_value
+      FROM custom_field_values cfv
+
+      INNER JOIN custom_fields cf
+        ON cfv.field_id = cf.id
+
+      WHERE cf.module_key = 'customer'
+        AND cfv.record_id = $1
+
+      ORDER BY cf.display_order ASC, cf.id ASC
       `,
       [id]
     );
 
-    // Merge Customer + Dynamic Fields
+    // -----------------------------------------
+    // 3. Merge Customer + Custom Fields
+    // -----------------------------------------
+
     const customerData = {
       ...customer,
     };
@@ -392,13 +696,21 @@ AND is_deleted = false
       customerData[field.field_key] = field.field_value;
     });
 
+    // -----------------------------------------
+    // 4. Response
+    // -----------------------------------------
+
     res.json({
       success: true,
       customer: customerData,
     });
 
   } catch (error) {
-    console.error(error);
+
+    console.error(
+      "Get Customer By ID Error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -406,26 +718,209 @@ AND is_deleted = false
     });
   }
 };
+
+// const updateCustomer = async (req, res) => {
+//   try {
+
+//     const { id } = req.params;
+
+//     // const { name, phone, email, address } = req.body;
+//     const { fields } = req.body;
+
+//     await db.query("BEGIN");
+
+//     await db.query(
+//       `
+//   UPDATE customers
+//   SET
+//     customer_code = $1,
+//     name = $2,
+//     phone = $3
+//   WHERE id = $4
+//     AND is_deleted = false
+//   `,
+//       [
+//         fields.customer_code,
+//         fields.customer_name,
+//         fields.phone,
+//         id,
+//       ]
+//     );
+
+//     const fieldsResult = await db.query(`
+//   SELECT id, field_key
+//   FROM company_customer_fields
+// `);
+
+//     const fieldMap = {};
+
+//     fieldsResult.rows.forEach((field) => {
+//       fieldMap[field.field_key] = field.id;
+//     });
+
+
+//     await db.query(
+//       `
+//   DELETE FROM customer_field_values
+//   WHERE customer_id = $1
+//   `,
+//       [id]
+//     );
+
+//     for (const [fieldKey, fieldValue] of Object.entries(fields)) {
+
+//       if (
+//         fieldKey === "customer_code" ||
+//         fieldKey === "customer_name" ||
+//         fieldKey === "phone"
+//       ) {
+//         continue;
+//       }
+
+//       if (!fieldMap[fieldKey]) {
+//         continue;
+//       }
+
+//       await db.query(
+//         `
+//     INSERT INTO customer_field_values
+//     (customer_id, field_id, field_value)
+//     VALUES ($1, $2, $3)
+//     `,
+//         [
+//           id,
+//           fieldMap[fieldKey],
+//           fieldValue,
+//         ]
+//       );
+//     }
+
+//     await db.query("COMMIT");
+
+//     res.json({
+//       success: true,
+//       message: "Customer Updated Successfully",
+//     });
+
+//   } catch (error) {
+//     await db.query("ROLLBACK");
+
+//     console.error(error);
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Server Error",
+//     });
+
+//   }
+// };
+
 const updateCustomer = async (req, res) => {
+  const client = await db.connect();
+
   try {
-
     const { id } = req.params;
-
-    // const { name, phone, email, address } = req.body;
     const { fields } = req.body;
 
-    await db.query("BEGIN");
+    if (!fields || typeof fields !== "object") {
+      return res.status(400).json({
+        success: false,
+        message: "Customer fields are required.",
+      });
+    }
 
-    await db.query(
+    // -----------------------------------------
+    // 1. Check customer exists
+    // -----------------------------------------
+
+    const customerExists = await client.query(
       `
-  UPDATE customers
-  SET
-    customer_code = $1,
-    name = $2,
-    phone = $3
-  WHERE id = $4
-    AND is_deleted = false
-  `,
+      SELECT id
+      FROM customers
+      WHERE id = $1
+        AND is_deleted = false
+      LIMIT 1
+      `,
+      [id]
+    );
+
+    if (customerExists.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found.",
+      });
+    }
+
+    // -----------------------------------------
+    // 2. Check duplicate customer code
+    // -----------------------------------------
+
+    const customerCodeExists = await client.query(
+      `
+      SELECT id
+      FROM customers
+      WHERE customer_code = $1
+        AND id <> $2
+      LIMIT 1
+      `,
+      [
+        fields.customer_code,
+        id,
+      ]
+    );
+
+    if (customerCodeExists.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Customer code already exists.",
+      });
+    }
+
+    // -----------------------------------------
+    // 3. Check duplicate phone
+    // -----------------------------------------
+
+    const phoneExists = await client.query(
+      `
+      SELECT id
+      FROM customers
+      WHERE phone = $1
+        AND id <> $2
+      LIMIT 1
+      `,
+      [
+        fields.phone,
+        id,
+      ]
+    );
+
+    if (phoneExists.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number already exists.",
+      });
+    }
+
+    // -----------------------------------------
+    // 4. Start transaction
+    // -----------------------------------------
+
+    await client.query("BEGIN");
+
+    // -----------------------------------------
+    // 5. Update main customer record
+    // -----------------------------------------
+
+    await client.query(
+      `
+      UPDATE customers
+      SET
+        customer_code = $1,
+        name = $2,
+        phone = $3
+      WHERE id = $4
+        AND is_deleted = false
+      `,
       [
         fields.customer_code,
         fields.customer_name,
@@ -434,28 +929,39 @@ const updateCustomer = async (req, res) => {
       ]
     );
 
-    const fieldsResult = await db.query(`
-  SELECT id, field_key
-  FROM company_customer_fields
-`);
+    // -----------------------------------------
+    // 6. Get NEW custom field definitions
+    // -----------------------------------------
+
+    const customFieldsResult = await client.query(
+      `
+      SELECT
+        id,
+        field_key,
+        field_type,
+        is_visible
+      FROM custom_fields
+      WHERE module_key = 'customer'
+      `
+    );
+
+    // -----------------------------------------
+    // 7. Create field map
+    // -----------------------------------------
 
     const fieldMap = {};
 
-    fieldsResult.rows.forEach((field) => {
-      fieldMap[field.field_key] = field.id;
+    customFieldsResult.rows.forEach((field) => {
+      fieldMap[field.field_key] = field;
     });
 
-
-    await db.query(
-      `
-  DELETE FROM customer_field_values
-  WHERE customer_id = $1
-  `,
-      [id]
-    );
+    // -----------------------------------------
+    // 8. Update custom field values
+    // -----------------------------------------
 
     for (const [fieldKey, fieldValue] of Object.entries(fields)) {
 
+      // Core customer fields
       if (
         fieldKey === "customer_code" ||
         fieldKey === "customer_name" ||
@@ -464,25 +970,71 @@ const updateCustomer = async (req, res) => {
         continue;
       }
 
-      if (!fieldMap[fieldKey]) {
+      const customField = fieldMap[fieldKey];
+
+      // CRM me field definition nahi hai
+      if (!customField) {
         continue;
       }
 
-      await db.query(
+      // Empty value
+      if (
+        fieldValue === null ||
+        fieldValue === undefined ||
+        String(fieldValue).trim() === ""
+      ) {
+        // Existing value ko NULL/blank ke saath update karne ke
+        // bajay row remove kar rahe hain.
+        // Isse unnecessary empty rows nahi rahengi.
+
+        await client.query(
+          `
+          DELETE FROM custom_field_values
+          WHERE field_id = $1
+            AND record_id = $2
+          `,
+          [
+            customField.id,
+            id,
+          ]
+        );
+
+        continue;
+      }
+
+      // -----------------------------------------
+      // UPSERT
+      // -----------------------------------------
+
+      await client.query(
         `
-    INSERT INTO customer_field_values
-    (customer_id, field_id, field_value)
-    VALUES ($1, $2, $3)
-    `,
+        INSERT INTO custom_field_values
+        (
+          field_id,
+          record_id,
+          field_value,
+          updated_at
+        )
+        VALUES
+        ($1, $2, $3, NOW())
+        ON CONFLICT (field_id, record_id)
+        DO UPDATE SET
+          field_value = EXCLUDED.field_value,
+          updated_at = NOW()
+        `,
         [
+          customField.id,
           id,
-          fieldMap[fieldKey],
-          fieldValue,
+          String(fieldValue),
         ]
       );
     }
 
-    await db.query("COMMIT");
+    // -----------------------------------------
+    // 9. Commit
+    // -----------------------------------------
+
+    await client.query("COMMIT");
 
     res.json({
       success: true,
@@ -490,14 +1042,33 @@ const updateCustomer = async (req, res) => {
     });
 
   } catch (error) {
-    await db.query("ROLLBACK");
 
-    console.error(error);
+    // -----------------------------------------
+    // Rollback
+    // -----------------------------------------
+
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      console.error(
+        "Customer Update Rollback Error:",
+        rollbackError
+      );
+    }
+
+    console.error(
+      "Update Customer Error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
       message: "Server Error",
     });
+
+  } finally {
+
+    client.release();
 
   }
 };

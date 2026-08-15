@@ -4,8 +4,34 @@ const router = express.Router();
 
 const {
   getDashboard,
+  getDashboardWidgetSettings,
+  updateDashboardWidgetSettings,
 } = require("../controllers/dashboardController");
 
-router.get("/", getDashboard);
+
+// ==========================================
+// DASHBOARD WIDGET SETTINGS
+// ==========================================
+
+router.get(
+  "/widgets",
+  getDashboardWidgetSettings
+);
+
+router.put(
+  "/widgets",
+  updateDashboardWidgetSettings
+);
+
+
+// ==========================================
+// DASHBOARD
+// ==========================================
+
+router.get(
+  "/",
+  getDashboard
+);
+
 
 module.exports = router;

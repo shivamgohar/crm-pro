@@ -1,3 +1,6 @@
+import api from "../../../api/api";
+
+
 // ==========================================
 // CONFIG
 // ==========================================
@@ -349,6 +352,80 @@ export const syncGoogleSheet = async ({
     throw new Error(
       data?.message ||
       "Google Sheet sync failed."
+    );
+  }
+
+  return data;
+};
+
+
+
+
+
+// ==========================================
+// PUSH CRM DATA → GOOGLE SHEET
+// ==========================================
+
+export const pushCrmToGoogleSheet = async ({
+  spreadsheetId,
+  sheetName,
+  accessToken,
+}) => {
+
+  if (!spreadsheetId) {
+    throw new Error(
+      "Spreadsheet ID is required."
+    );
+  }
+
+  if (!sheetName) {
+    throw new Error(
+      "Sheet name is required."
+    );
+  }
+
+  if (!accessToken) {
+    throw new Error(
+      "Google access token is required."
+    );
+  }
+
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000/api";
+
+  const response = await fetch(
+    `${apiUrl}/services/google-push`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        spreadsheetId,
+        sheetName,
+        accessToken,
+      }),
+    }
+  );
+
+  const data =
+    await response
+      .json()
+      .catch(() => ({}));
+
+  if (!response.ok) {
+    console.error(
+      "CRM → Google Push Error:",
+      data
+    );
+
+    throw new Error(
+      data?.message ||
+      data?.error ||
+      "CRM to Google Sheet sync failed."
     );
   }
 
