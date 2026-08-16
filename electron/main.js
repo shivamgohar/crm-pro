@@ -1,46 +1,48 @@
-const { app, BrowserWindow } = require("electron");
+const { app } = require("electron");
+
+const { autoUpdater } = require("electron-updater");
+
+const { createMainWindow } = require("./windowManager");
+const { startServer, stopServer } = require("./serverManager");
 const waitForServer = require("./waitForServer");
 
 let mainWindow;
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    autoHideMenuBar: true,
-    title: "CRM PRO",
-
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  if (app.isPackaged) {
-    mainWindow.loadFile("client/dist/index.html");
-  } else {
-    mainWindow.loadURL("http://localhost:5173");
-    mainWindow.webContents.openDevTools();
-  }
-}
-
 app.whenReady().then(async () => {
   try {
+    // Start backend server
+    startServer();
+
+    // Wait until backend is ready
     await waitForServer();
 
-    createWindow();
+    // Create Electron window
+    mainWindow = createMainWindow();
+
+    // Check for application updates
+    if (app.isPackaged) {
+      autoUpdater.checkForUpdatesAndNotify();
+    }
 
   } catch (error) {
-
-    console.error(error);
+    console.error("CRM PRO startup error:", error);
 
     app.quit();
-
   }
+});
+
+app.on("before-quit", () => {
+  stopServer();
 });
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
+  }
+});
+
+app.on("activate", () => {
+  if (mainWindow === null) {
+    mainWindow = createMainWindow();
   }
 });

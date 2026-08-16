@@ -40,3 +40,5 @@ crm_database_schema*.txt
 
 # Local Git/debug output
 git-output.txt
+# Electron build output
+release/

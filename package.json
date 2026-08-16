@@ -5,19 +5,17 @@
   "author": "Shivam Gohar",
   "main": "electron/main.js",
   "private": true,
-
   "scripts": {
     "electron": "electron .",
     "dist": "electron-builder --win"
   },
-
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.2.0",
-    "@mui/material": "^9.2.0"
+    "@mui/material": "^9.2.0",
+    "electron-updater": "^6.8.9"
   },
-
   "devDependencies": {
     "concurrently": "^10.0.4",
     "cross-env": "^10.1.0",
@@ -25,29 +23,40 @@
     "electron-builder": "^26.15.3",
     "wait-on": "^9.1.0"
   },
-
   "build": {
     "appId": "com.crmpro.desktop",
     "productName": "CRM PRO",
-
+    "publish": {
+      "provider": "github",
+      "owner": "shivamgohar",
+      "repo": "crm-pro",
+      "releaseType": "release"
+    },
+    "disableDefaultIgnoredFiles": true,
+    "afterPack": "./electron/afterPack.js",
     "directories": {
       "output": "release"
     },
-
     "files": [
       "electron/**/*",
       "client/dist/**/*",
       "server/**/*",
       "package.json"
     ],
-
     "extraResources": [
       {
         "from": "server",
-        "to": "server"
+        "to": "server",
+        "filter": [
+          "**/*",
+          "!node_modules/.cache/**/*"
+        ]
+      },
+      {
+        "from": "config/app.config.json",
+        "to": "config/app.config.json"
       }
     ],
-
     "win": {
       "target": [
         {
@@ -59,7 +68,6 @@
       ],
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
-
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
