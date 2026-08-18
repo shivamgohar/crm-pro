@@ -1,6 +1,6 @@
 {
   "name": "crm-pro",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "QeXo Desktop Application",
   "author": "Shivam Gohar",
   "main": "electron/main.js",
@@ -31,7 +31,8 @@
       "provider": "github",
       "owner": "shivamgohar",
       "repo": "crm-pro",
-      "releaseType": "release"
+      "releaseType": "release",
+      "publishAutoUpdate": true
     },
     "disableDefaultIgnoredFiles": true,
     "afterPack": "./electron/afterPack.js",
