@@ -28,6 +28,7 @@ import DataCleanup from "../pages/settings/DataCleanup";
 import Restore from "../pages/settings/Restore";
 import ExportData from "../pages/settings/ExportData";
 import DashboardControl from "../pages/settings/dashboard/DashboardControl";
+import SoftwareUpdates from "../pages/settings/SoftwareUpdates";
 
 function AppRoutes() {
   return (
@@ -229,6 +230,17 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardControl />
+          </ProtectedRoute>
+        }
+      />
+
+    
+
+      <Route
+        path="/settings/software-updates"
+        element={
+          <ProtectedRoute>
+            <SoftwareUpdates />
           </ProtectedRoute>
         }
       />

@@ -1,6 +1,3 @@
-// const appConfig = require("../../config/appConfig");
-
-
 import {
   AppBar,
   Toolbar,
@@ -9,34 +6,30 @@ import {
   Avatar,
   Badge,
   TextField,
-  // InputAdornment,
   Typography,
-
-  // Button,
-    Menu,
+  Menu,
   MenuItem,
   Divider,
   ListItemIcon,
 } from "@mui/material";
 
-// import SearchIcon from "@mui/icons-material/Search";
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
-// import NotificationsActiveOutlinedIcon from "@mui/icons-material/NotificationsActiveOutlined";
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-
-// import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-
+const SIDEBAR_WIDTH = 284;
+const NAVBAR_HEIGHT = 64;
 
 function Navbar() {
   const navigate = useNavigate();
+
   const user = JSON.parse(localStorage.getItem("user"));
+
   const [settingsAnchor, setSettingsAnchor] = useState(null);
   const [notificationAnchor, setNotificationAnchor] = useState(null);
 
@@ -50,24 +43,25 @@ function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+
     navigate("/login");
   };
 
   const handleSettingsOpen = (event) => {
-  setSettingsAnchor(event.currentTarget);
-};
+    setSettingsAnchor(event.currentTarget);
+  };
 
-const handleSettingsClose = () => {
-  setSettingsAnchor(null);
-};
+  const handleSettingsClose = () => {
+    setSettingsAnchor(null);
+  };
 
-const handleNotificationOpen = (event) => {
-  setNotificationAnchor(event.currentTarget);
-};
+  const handleNotificationOpen = (event) => {
+    setNotificationAnchor(event.currentTarget);
+  };
 
-const handleNotificationClose = () => {
-  setNotificationAnchor(null);
-};
+  const handleNotificationClose = () => {
+    setNotificationAnchor(null);
+  };
 
   return (
     <AppBar
@@ -75,150 +69,203 @@ const handleNotificationClose = () => {
       elevation={0}
       color="inherit"
       sx={{
-        zIndex: (theme) => theme.zIndex.drawer + 1,
+        left: `${SIDEBAR_WIDTH}px`,
+        width: `calc(100% - ${SIDEBAR_WIDTH}px)`,
+        height: `${NAVBAR_HEIGHT}px`,
         borderBottom: 1,
         borderColor: "divider",
         bgcolor: "background.paper",
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        boxShadow: "none",
       }}
     >
-      <Toolbar sx={{ minHeight: 72 }}>
+      <Toolbar
+        sx={{
+          minHeight: `${NAVBAR_HEIGHT}px !important`,
+          height: `${NAVBAR_HEIGHT}px`,
+          px: 2.5,
+        }}
+      >
         <Box
           sx={{
             width: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 3,
+            gap: 2,
           }}
         >
-          {/* Search */}
+          {/* SEARCH */}
+
           <TextField
             placeholder="Search customers..."
             size="small"
             sx={{
               width: 320,
-              maxWidth: "30%",
+
+              "& .MuiOutlinedInput-root": {
+                height: 40,
+                borderRadius: 2,
+              },
+
+              "& input": {
+                fontSize: "0.82rem",
+              },
             }}
-            // InputProps={{
-            //   startAdornment: (
-            //     <InputAdornment position="start">
-            //       <SearchIcon />
-            //     </InputAdornment>
-            //   ),
-            // }}
           />
 
-          {/* Right */}
+          {/* RIGHT SIDE */}
+
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 1,
+              gap: 0.75,
             }}
           >
-          <IconButton onClick={handleNotificationOpen}>
-              <Badge badgeContent={0} color="error">
-                <NotificationsNoneOutlinedIcon /> 
+            {/* Notifications */}
+
+            <IconButton
+              size="small"
+              onClick={handleNotificationOpen}
+            >
+              <Badge
+                badgeContent={0}
+                color="error"
+              >
+                <NotificationsNoneOutlinedIcon
+                  sx={{ fontSize: 22 }}
+                />
               </Badge>
             </IconButton>
 
-       <IconButton onClick={handleSettingsOpen}>
-  <SettingsOutlinedIcon />
-</IconButton>
+            {/* Settings */}
 
-         <Box
-  sx={{
-    display: "flex",
-    alignItems: "center",
-    gap: 1.5,
-  }}
->
-  <Avatar
-    sx={{
-      width: 40,
-      height: 40,
-      bgcolor: "primary.main",
-      fontWeight: 600,
-    }}
-  >
-    {initials}
-  </Avatar>
+            <IconButton
+              size="small"
+              onClick={handleSettingsOpen}
+            >
+              <SettingsOutlinedIcon
+                sx={{ fontSize: 22 }}
+              />
+            </IconButton>
 
-  <Box>
-    <Typography
-      variant="body2"
-      fontWeight={600}
-      lineHeight={1.2}
-    >
-      {user?.fullName}
-    </Typography>
+            {/* User */}
 
-    <Typography
-      variant="caption"
-      color="text.secondary"
-    >
-      {user?.role}
-    </Typography>
-  </Box>
-</Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                ml: 0.75,
+              }}
+            >
+              <Avatar
+                sx={{
+                  width: 38,
+                  height: 38,
+                  bgcolor: "primary.main",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                }}
+              >
+                {initials}
+              </Avatar>
 
+              <Box
+                sx={{
+                  minWidth: 0,
+                }}
+              >
+                <Typography
+                  fontSize="0.8rem"
+                  fontWeight={600}
+                  noWrap
+                  sx={{
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {user?.fullName}
+                </Typography>
+
+                <Typography
+                  fontSize="0.7rem"
+                  color="text.secondary"
+                  noWrap
+                  sx={{
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {user?.role}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
         </Box>
       </Toolbar>
-<Menu
-  anchorEl={settingsAnchor}
-  open={Boolean(settingsAnchor)}
-  onClose={handleSettingsClose}
->
-  <MenuItem onClick={handleSettingsClose}>
-    <ListItemIcon>
-      <AccountCircleOutlinedIcon fontSize="small" />
-    </ListItemIcon>
-    My Profile
-  </MenuItem>
 
-  <MenuItem onClick={handleSettingsClose}>
-    <ListItemIcon>
-      <SettingsOutlinedIcon fontSize="small" />
-    </ListItemIcon>
-    Account Settings
-  </MenuItem>
+      {/* SETTINGS MENU */}
 
-  <MenuItem onClick={handleSettingsClose}>
-    <ListItemIcon>
-      <LockOutlinedIcon fontSize="small" />
-    </ListItemIcon>
-    Change Password
-  </MenuItem>
+      <Menu
+        anchorEl={settingsAnchor}
+        open={Boolean(settingsAnchor)}
+        onClose={handleSettingsClose}
+      >
+        <MenuItem onClick={handleSettingsClose}>
+          <ListItemIcon>
+            <AccountCircleOutlinedIcon fontSize="small" />
+          </ListItemIcon>
 
-  <Divider />
+          My Profile
+        </MenuItem>
 
-  <MenuItem
-    onClick={() => {
-      handleSettingsClose();
-      handleLogout();
-    }}
-  >
-    <ListItemIcon>
-      <LogoutOutlinedIcon fontSize="small" />
-    </ListItemIcon>
-    Logout
-  </MenuItem>
-</Menu>
+        <MenuItem onClick={handleSettingsClose}>
+          <ListItemIcon>
+            <SettingsOutlinedIcon fontSize="small" />
+          </ListItemIcon>
 
-<Menu
-  anchorEl={notificationAnchor}
-  open={Boolean(notificationAnchor)}
-  onClose={handleNotificationClose}
->
-  <MenuItem onClick={handleNotificationClose}>
-    <ListItemIcon>
-      <NotificationsNoneOutlinedIcon fontSize="small" />
-    </ListItemIcon>
-    No Notifications
-  </MenuItem>
-</Menu>
+          Account Settings
+        </MenuItem>
 
+        <MenuItem onClick={handleSettingsClose}>
+          <ListItemIcon>
+            <LockOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+
+          Change Password
+        </MenuItem>
+
+        <Divider />
+
+        <MenuItem
+          onClick={() => {
+            handleSettingsClose();
+            handleLogout();
+          }}
+        >
+          <ListItemIcon>
+            <LogoutOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+
+          Logout
+        </MenuItem>
+      </Menu>
+
+      {/* NOTIFICATION MENU */}
+
+      <Menu
+        anchorEl={notificationAnchor}
+        open={Boolean(notificationAnchor)}
+        onClose={handleNotificationClose}
+      >
+        <MenuItem onClick={handleNotificationClose}>
+          <ListItemIcon>
+            <NotificationsNoneOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+
+          No Notifications
+        </MenuItem>
+      </Menu>
     </AppBar>
   );
 }

@@ -1,6 +1,6 @@
 export const brandConfig = {
 
-  appName: "CRM PRO",
+  appName: "QeXo",
 
   logo: "",
 

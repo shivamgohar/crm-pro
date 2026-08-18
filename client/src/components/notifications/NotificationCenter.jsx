@@ -13,7 +13,7 @@ import {
   ListItemButton,
   ListItemText,
   Chip,
-//   Button,
+  //   Button,
 } from "@mui/material";
 
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
@@ -21,10 +21,7 @@ import CircleIcon from "@mui/icons-material/Circle";
 
 import api from "../../api/api";
 
-function NotificationCenter({
-  mode = "navbar",
-  limit = 5,
-}) {
+function NotificationCenter({ mode = "navbar", limit = 5 }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -35,23 +32,13 @@ function NotificationCenter({
 
   const fetchNotifications = async () => {
     try {
-      const response = await api.get(
-        "/notifications"
-      );
+      const response = await api.get("/notifications");
 
-      setNotifications(
-        response.data.notifications || []
-      );
+      setNotifications(response.data.notifications || []);
 
-      setUnreadCount(
-        response.data.unreadCount || 0
-      );
-
+      setUnreadCount(response.data.unreadCount || 0);
     } catch (error) {
-      console.error(
-        "Notification fetch error:",
-        error
-      );
+      console.error("Notification fetch error:", error);
     }
   };
 
@@ -63,10 +50,7 @@ function NotificationCenter({
     fetchNotifications();
 
     // Refresh notifications every 60 seconds
-    const interval = setInterval(
-      fetchNotifications,
-      60 * 1000
-    );
+    const interval = setInterval(fetchNotifications, 60 * 1000);
 
     return () => {
       clearInterval(interval);
@@ -79,9 +63,7 @@ function NotificationCenter({
 
   const markAsRead = async (id) => {
     try {
-      await api.put(
-        `/notifications/${id}/read`
-      );
+      await api.put(`/notifications/${id}/read`);
 
       setNotifications((current) =>
         current.map((notification) =>
@@ -90,19 +72,13 @@ function NotificationCenter({
                 ...notification,
                 is_read: true,
               }
-            : notification
-        )
+            : notification,
+        ),
       );
 
-      setUnreadCount((count) =>
-        Math.max(0, count - 1)
-      );
-
+      setUnreadCount((count) => Math.max(0, count - 1));
     } catch (error) {
-      console.error(
-        "Notification read error:",
-        error
-      );
+      console.error("Notification read error:", error);
     }
   };
 
@@ -128,15 +104,12 @@ function NotificationCenter({
       return "";
     }
 
-    return new Date(date).toLocaleString(
-      "en-IN",
-      {
-        day: "2-digit",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      }
-    );
+    return new Date(date).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   // ==========================================
@@ -148,16 +121,8 @@ function NotificationCenter({
 
     return (
       <>
-        <IconButton
-          onClick={(event) =>
-            setAnchorEl(event.currentTarget)
-          }
-        >
-          <Badge
-            badgeContent={unreadCount}
-            color="error"
-            max={99}
-          >
+        <IconButton onClick={(event) => setAnchorEl(event.currentTarget)}>
+          <Badge badgeContent={unreadCount} color="error" max={99}>
             <NotificationsNoneIcon />
           </Badge>
         </IconButton>
@@ -189,10 +154,7 @@ function NotificationCenter({
                 alignItems: "center",
               }}
             >
-              <Typography
-                variant="h6"
-                fontWeight={700}
-              >
+              <Typography variant="h6" fontWeight={700}>
                 Notifications
               </Typography>
 
@@ -208,16 +170,11 @@ function NotificationCenter({
             <Divider />
 
             <NotificationList
-              notifications={
-                notifications.slice(0, limit)
-              }
+              notifications={notifications.slice(0, limit)}
               onRead={markAsRead}
               formatDate={formatDate}
-              getPriorityColor={
-                getPriorityColor
-              }
+              getPriorityColor={getPriorityColor}
             />
-
           </Paper>
         </Popover>
       </>
@@ -244,46 +201,31 @@ function NotificationCenter({
         }}
       >
         <Box>
-          <Typography
-            variant="h5"
-            fontWeight={700}
-          >
+          <Typography variant="h5" fontWeight={700}>
             Notifications
           </Typography>
 
-          <Typography
-            variant="body2"
-            color="text.secondary"
-          >
+          <Typography variant="body2" color="text.secondary">
             Important alerts and updates
           </Typography>
         </Box>
 
         {unreadCount > 0 && (
-          <Chip
-            label={`${unreadCount} unread`}
-            color="primary"
-            size="small"
-          />
+          <Chip label={`${unreadCount} unread`} color="primary" size="small" />
         )}
       </Box>
 
       <Divider />
 
       <NotificationList
-        notifications={
-          notifications.slice(0, limit)
-        }
+        notifications={notifications.slice(0, limit)}
         onRead={markAsRead}
         formatDate={formatDate}
-        getPriorityColor={
-          getPriorityColor
-        }
+        getPriorityColor={getPriorityColor}
       />
     </Paper>
   );
 }
-
 
 // ==========================================
 // NOTIFICATION LIST
@@ -311,16 +253,9 @@ function NotificationList({
           }}
         />
 
-        <Typography
-          fontWeight={600}
-        >
-          No notifications
-        </Typography>
+        <Typography fontWeight={600}>No notifications</Typography>
 
-        <Typography
-          variant="body2"
-          color="text.secondary"
-        >
+        <Typography variant="body2" color="text.secondary">
           You're all caught up.
         </Typography>
       </Box>
@@ -329,117 +264,100 @@ function NotificationList({
 
   return (
     <List disablePadding>
-      {notifications.map(
-        (notification, index) => (
-          <Box key={notification.id}>
-
-            <ListItem
-              disablePadding
+      {notifications.map((notification, index) => (
+        <Box key={notification.id}>
+          <ListItem
+            disablePadding
+            sx={{
+              backgroundColor: notification.is_read
+                ? "transparent"
+                : "action.hover",
+            }}
+          >
+            <ListItemButton
+              onClick={() => {
+                if (!notification.is_read) {
+                  onRead(notification.id);
+                }
+              }}
               sx={{
-                backgroundColor:
-                  notification.is_read
-                    ? "transparent"
-                    : "action.hover",
+                alignItems: "flex-start",
+                py: 1.5,
               }}
             >
-              <ListItemButton
-                onClick={() => {
-                  if (
-                    !notification.is_read
-                  ) {
-                    onRead(notification.id);
-                  }
-                }}
+              <CircleIcon
                 sx={{
-                  alignItems: "flex-start",
-                  py: 1.5,
+                  fontSize: 9,
+                  mt: 1,
+                  mr: 1.5,
+                  color: notification.is_read
+                    ? "transparent"
+                    : `${getPriorityColor(notification.priority)}.main`,
                 }}
-              >
+              />
 
-                <CircleIcon
-                  sx={{
-                    fontSize: 9,
-                    mt: 1,
-                    mr: 1.5,
-                    color:
-                      notification.is_read
-                        ? "transparent"
-                        : `${getPriorityColor(
-                            notification.priority
-                          )}.main`,
-                  }}
-                />
+              <ListItemText
+                primary={
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 1,
+                    }}
+                  >
+                    <Typography fontWeight={notification.is_read ? 500 : 700}>
+                      {notification.title}
+                    </Typography>
 
-                <ListItemText
-                  primary={
-                    <Box
+                    <Chip
+                      label={notification.priority}
+                      size="small"
+                      color={getPriorityColor(notification.priority)}
                       sx={{
-                        display: "flex",
-                        justifyContent:
-                          "space-between",
-                        gap: 1,
+                        height: 20,
+                        fontSize: 10,
+                      }}
+                    />
+                  </Box>
+                }
+                secondary={
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "block",
+                    }}
+                  >
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{
+                        display: "block",
+                        mt: 0.5,
                       }}
                     >
-                      <Typography
-                        fontWeight={
-                          notification.is_read
-                            ? 500
-                            : 700
-                        }
-                      >
-                        {notification.title}
-                      </Typography>
+                      {notification.message}
+                    </Typography>
 
-                      <Chip
-                        label={
-                          notification.priority
-                        }
-                        size="small"
-                        color={getPriorityColor(
-                          notification.priority
-                        )}
-                        sx={{
-                          height: 20,
-                          fontSize: 10,
-                        }}
-                      />
-                    </Box>
-                  }
-                  secondary={
-                    <>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mt: 0.5 }}
-                      >
-                        {
-                          notification.message
-                        }
-                      </Typography>
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      color="text.disabled"
+                      sx={{
+                        display: "block",
+                      }}
+                    >
+                      {formatDate(notification.created_at)}
+                    </Typography>
+                  </Box>
+                }
+              />
+            </ListItemButton>
+          </ListItem>
 
-                      <Typography
-                        variant="caption"
-                        color="text.disabled"
-                      >
-                        {formatDate(
-                          notification.created_at
-                        )}
-                      </Typography>
-                    </>
-                  }
-                />
-
-              </ListItemButton>
-            </ListItem>
-
-            {index !==
-              notifications.length - 1 && (
-              <Divider />
-            )}
-
-          </Box>
-        )
-      )}
+          {index !== notifications.length - 1 && <Divider />}
+        </Box>
+      ))}
     </List>
   );
 }

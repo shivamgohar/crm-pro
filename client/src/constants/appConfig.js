@@ -1,6 +1,6 @@
 export const appConfig = {
 
-  appName: "CRM PRO",
+  appName: "QeXo",
 
   company: "Your Company",
 

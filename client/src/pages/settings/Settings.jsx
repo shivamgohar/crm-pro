@@ -16,6 +16,7 @@ import {
   Security,
   Palette,
   Tune,
+  SystemUpdate,
 } from "@mui/icons-material";
 
 import { useNavigate } from "react-router-dom";
@@ -31,13 +32,14 @@ function Settings() {
       path: "/settings/company",
       disabled: true,
     },
-{
-  title: "Field Management",
-  description: "Manage custom fields across CRM modules",
-  icon: <Tune fontSize="large" />,
-  path: "/settings/field-management",
-  disabled: false,
-},
+
+    {
+      title: "Field Management",
+      description: "Manage custom fields across CRM modules",
+      icon: <Tune fontSize="large" />,
+      path: "/settings/field-management",
+      disabled: false,
+    },
 
     {
       title: "Customer Fields",
@@ -46,6 +48,7 @@ function Settings() {
       path: "/settings/customer-fields",
       disabled: false,
     },
+
     {
       title: "Customer Status",
       description: "Manage customer status",
@@ -53,6 +56,7 @@ function Settings() {
       path: "/settings/customer-status",
       disabled: false,
     },
+
     {
       title: "Data Management",
       description: "Import, export, backup and restore data",
@@ -60,6 +64,7 @@ function Settings() {
       path: "/settings/data-management",
       disabled: false,
     },
+
     {
       title: "Users",
       description: "Manage users",
@@ -67,6 +72,7 @@ function Settings() {
       path: "/settings/users",
       disabled: false,
     },
+
     {
       title: "Roles & Permissions",
       description: "Manage access control",
@@ -74,12 +80,22 @@ function Settings() {
       path: "/settings/roles",
       disabled: true,
     },
+
     {
       title: "Branding",
       description: "Customize logo and theme",
       icon: <Palette fontSize="large" />,
       path: "/settings/branding",
       disabled: true,
+    },
+
+    // Software Update
+    {
+      title: "Software Updates",
+      description: "Check for new software versions and updates",
+      icon: <SystemUpdate fontSize="large" />,
+      path: "/settings/software-updates",
+      disabled: false,
     },
   ];
 
@@ -96,20 +112,34 @@ function Settings() {
               <CardActionArea
                 sx={{ height: "100%" }}
                 disabled={item.disabled}
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  if (!item.disabled) {
+                    navigate(item.path);
+                  }
+                }}
               >
                 <CardContent>
-                  <Box mb={2}>{item.icon}</Box>
+                  <Box mb={2}>
+                    {item.icon}
+                  </Box>
 
                   <Typography variant="h6" gutterBottom>
                     {item.title}
                   </Typography>
 
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                  >
                     {item.description}
                   </Typography>
+
                   {item.disabled && (
-                    <Chip label="Coming Soon" size="small" sx={{ mt: 2 }} />
+                    <Chip
+                      label="Coming Soon"
+                      size="small"
+                      sx={{ mt: 2 }}
+                    />
                   )}
                 </CardContent>
               </CardActionArea>
