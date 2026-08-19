@@ -4,9 +4,9 @@ export const brandConfig = {
   appVersion: "1.0.1",
 
   // Company
-  companyName: "ACN GROUP",
-  companyTagline: "Water Experts",
-  companyWebsite: "https://acngroup.com",
+  companyName: "CompanyName",
+  companyTagline: "companytagline",
+  companyWebsite: "https://companyname.com",
   companyEmail: "",
   companyPhone: "",
 

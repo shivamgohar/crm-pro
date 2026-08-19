@@ -81,14 +81,13 @@ function Settings() {
       disabled: true,
     },
 
-    {
-      title: "Branding",
-      description: "Customize logo and theme",
-      icon: <Palette fontSize="large" />,
-      path: "/settings/branding",
-      disabled: true,
-    },
-
+ {
+  title: "Appearance & Theme",
+  description: "Customize the application's appearance and colors",
+  icon: <Palette fontSize="large" />,
+  path: "/settings/software-theme",
+  disabled: false,
+},
     // Software Update
     {
       title: "Software Updates",

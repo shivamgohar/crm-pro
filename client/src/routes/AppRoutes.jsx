@@ -29,8 +29,12 @@ import Restore from "../pages/settings/Restore";
 import ExportData from "../pages/settings/ExportData";
 import DashboardControl from "../pages/settings/dashboard/DashboardControl";
 import SoftwareUpdates from "../pages/settings/SoftwareUpdates";
+import SoftwareTheme from "../pages/settings/SoftwareTheme";
 
-function AppRoutes() {
+function AppRoutes({
+  themeSettings,
+  onThemeChange,
+}) {
   return (
     <Routes>
       <Route
@@ -244,6 +248,18 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+  path="/settings/software-theme"
+  element={
+    <ProtectedRoute>
+      <SoftwareTheme
+        themeSettings={themeSettings}
+        onThemeChange={onThemeChange}
+      />
+    </ProtectedRoute>
+  }
+/>
 
       <Route path="/register" element={<Register />} />
 

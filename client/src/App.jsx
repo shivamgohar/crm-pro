@@ -8,7 +8,10 @@ import Sidebar from "./components/Sidebar";
 import AppRoutes from "./routes/AppRoutes";
 // import { AppNavbar, AppSidebar } from "./components/layout";
 
-function App() {
+function App({
+  themeSettings,
+  onThemeChange,
+}) {
   const location = useLocation();
 
   // const isLoginPage = location.pathname === "/login";
@@ -32,12 +35,15 @@ function App() {
             marginLeft: isAuthPage ? 0 : 0,
             marginTop: isAuthPage ? 0 : 72,
             padding: isAuthPage ? 0 : 16,
-            background: "#f8fafc",
+            background: "background.default",
             minHeight: "100vh",
             boxSizing: "border-box",
           }}
         >
-          <AppRoutes />
+         <AppRoutes
+  themeSettings={themeSettings}
+  onThemeChange={onThemeChange}
+/>
         </div>
       </div>
     </div>

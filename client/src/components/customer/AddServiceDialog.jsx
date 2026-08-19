@@ -272,8 +272,8 @@ useEffect(() => {
             p: 2.5,
             mb: 3,
             borderRadius: 3,
-            bgcolor: "#f8fafc",
-            border: "1px solid #e2e8f0",
+            bgcolor: "background.paper",
+            border: "1px solid divider",
           }}
         >
           <Stack direction="row" spacing={2} alignItems="center">

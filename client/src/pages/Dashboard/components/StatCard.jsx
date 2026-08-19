@@ -19,9 +19,10 @@ function StatCard({
       sx={{
         p: 2.5,
         height: "100%",
-        border: "1px solid #e5e7eb",
+        border: "1px solid",
+        borderColor: "divider",
         borderRadius: 3,
-        backgroundColor: "#fff",
+        bgcolor: "background.paper",
       }}
     >
       <Box
@@ -46,8 +47,8 @@ function StatCard({
             label={change}
             size="small"
             sx={{
-              backgroundColor: "#22c55e",
-              color: "#fff",
+              bgcolor: "success.main",
+              color: "success.contrastText",
               fontWeight: 600,
             }}
           />

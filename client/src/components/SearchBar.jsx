@@ -1,7 +1,11 @@
 import { TextField, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-export default function SearchBar({ value, onChange, placeholder }) {
+export default function SearchBar({
+  value,
+  onChange,
+  placeholder,
+}) {
   return (
     <TextField
       fullWidth
@@ -10,23 +14,31 @@ export default function SearchBar({ value, onChange, placeholder }) {
       value={value}
       onChange={onChange}
       sx={{
-        // mb: 3,
-
         "& .MuiOutlinedInput-root": {
           borderRadius: 3,
-          backgroundColor: "#fff",
+          bgcolor: "background.paper",
 
           "& fieldset": {
-            borderColor: "#E5E7EB",
+            borderColor: "divider",
           },
 
           "&:hover fieldset": {
-            borderColor: "#1976d2",
+            borderColor: "primary.main",
           },
 
           "&.Mui-focused fieldset": {
             borderWidth: 2,
+            borderColor: "primary.main",
           },
+        },
+
+        "& .MuiInputBase-input": {
+          color: "text.primary",
+        },
+
+        "& .MuiInputBase-input::placeholder": {
+          color: "text.secondary",
+          opacity: 1,
         },
       }}
       InputProps={{

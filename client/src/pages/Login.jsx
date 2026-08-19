@@ -4,6 +4,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../styles/login.css";
 import { Link as RouterLink } from "react-router-dom";
+import { brandConfig } from "../config/brandConfig";
 
 import {
   Box,
@@ -60,7 +61,7 @@ console.log(response.data.user);
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        bgcolor: "#f4f7fe",
+        bgcolor: "background.paper",
       }}
     >
       <Paper
@@ -72,7 +73,7 @@ console.log(response.data.user);
         }}
       >
         <Typography variant="h3" fontWeight="bold" align="center">
-          ACN GROUP
+          {brandConfig.companyName}
         </Typography>
 
         <Typography
