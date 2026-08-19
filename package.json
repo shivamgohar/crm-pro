@@ -1,6 +1,6 @@
 {
   "name": "crm-pro",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "QeXo Desktop Application",
   "author": "Shivam Gohar",
   "main": "electron/main.js",
@@ -79,3 +79,4 @@
     }
   }
 }
+
